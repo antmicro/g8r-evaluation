@@ -25,7 +25,7 @@ for design_dir in $design_root/*; do
             if [ -z $build_dir ]; then
                 mkdir -p $build_dir
             fi
-            ./estimate-cell-area.sh "$(realpath $design)" "$top" 2>/dev/null | tail -2 | awk -v f="$top" '
+            ./estimate-cell-area.sh "$(realpath $design)" "$top" "$build_dir" 2>/dev/null | tail -2 | awk -v f="$top" '
                 { a[NR] = $2 }
             END {
                 printf "%-16s %10.2f %10.2f %6.2f\n", f, a[1], a[2], a[1] / a[2]

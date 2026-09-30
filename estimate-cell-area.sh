@@ -15,16 +15,17 @@ usage() {
 case "${1:-}" in
     ""|-h|--help) usage; exit 0 ;;
 esac
-[[ $# -eq 2 ]] || { usage >&2; exit 2; }
+[[ $# -eq 3 ]] || { usage >&2; exit 2; }
 
 design=$1
 top=$2
+build_dir=${3:-./build}
 output="build/$top"
 libs=(lib/*.lib)
 driver=tools/xlsynth/bin/xlsynth-driver
 codegen=tools/xls/codegen_main-ubuntu2004
 
-mkdir -p build/
+mkdir -p $build_dir
 
 echo "1/5  DSLX -> IR -> g8r"
 ./show-raw-g8r.sh "$design" "$top"
