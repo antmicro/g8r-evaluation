@@ -37,6 +37,7 @@ echo "2/5  Prepare ASAP7"
 
 echo "3/5  g8r -> ASAP7 cells -> area"
 "$driver" aig-tech-map "$output.aag" \
+    --strategy area \
     --liberty_proto build/asap7.proto \
     --module_name "$top" \
     --netlist_out "$output.g8r-mapped.v"
