@@ -6,8 +6,8 @@
 """Create one PNG chart per whitespace-delimited benchmark log file.
 
 Expected input resembles:
-    function  g8r_um2  yosys_um2  ratio
-    arith_add8  11.55       6.30    1.8
+    function  g8r_um2  yosys_um2  ratio  orfs_um2  ir2g8r_ms  g8r_ms  yosys_ms
+    arith_add8  3.02  3.12  0.97  10.00     17.00      80.00  201.00
 
 The first column is used as a category. All remaining columns whose values can
 be parsed as numbers are plotted. The script recursively discovers ``*.log``
@@ -54,7 +54,7 @@ def parse_log(path: Path) -> LogTable:
             continue
         cells = re.split(r"\s+", line)
         if len(cells) > 1:
-            rows.append(cells)
+            rows.append(cells[0:5])
 
     if len(rows) < 2:
         raise ValueError("expected a header and at least one data row")

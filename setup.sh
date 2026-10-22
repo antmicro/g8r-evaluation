@@ -9,7 +9,7 @@ set -euo pipefail
 # downloads and extracts asap7 liberty files.
 # Prerequisites: sudo apt install build-essential curl protobuf-compiler rustup yosys
 
-for command in cc curl protoc rustup yosys; do
+for command in cc curl protoc rustup yosys bazelisk; do
     command -v "$command" >/dev/null || { echo "Cannot find $command; see README.md" >&2; exit 1; }
 done
 
@@ -18,19 +18,19 @@ tools="$proj_root/tools"
 mkdir -p "$tools/xls"
 cd "$tools/xls"
 
-xls_url=https://github.com/xlsynth/xlsynth/releases/download/v0.55.0
+xls_url=https://github.com/xlsynth/xlsynth/releases/download/v0.59.0
 download() {
     [[ -f $1 ]] && echo "$2  $1" | sha256sum -c --status && return
     echo "Downloading $1"
     curl -fL "$xls_url/$1" -o "$1"
     echo "$2  $1" | sha256sum -c --status || { echo "Checksum failed: $1" >&2; exit 1; }
 }
-download codegen_main-ubuntu2004 d63f981520644aeac32f44e1ac15a8e77e37b5e90c66c43ee75991fbac7ca014
-download libxls-ubuntu2004.so.gz 1082bba506dfb564dfc7f457abd70b7f716c90af5958aff4aaf5bd76b3ce3cf8
-download dslx_stdlib.tar.gz 5aa41c2ac8bcf6d39f4bddb3f13cd8631660d583ed1a93972ff4a7d61ad58964
+download codegen_main-ubuntu2004 53f0c11c2c23c0a153b91bd0acfd34ad6a444896823c7d809e6d7903925a6a6b
+download libxls-ubuntu2004.so.gz 2faf86a7aa83bb097df3b4862bf61ed58602fb0691ba0a46de409176eca4ef4b
+download dslx_stdlib.tar.gz ce4de2fcf79f960ade7987cbab9c1d1e2e4d2a2be4372aff8f18de69e908554d
 chmod +x codegen_main-ubuntu2004
 gzip -dkf libxls-ubuntu2004.so.gz
-mv -f libxls-ubuntu2004.so libxls-v0.55.0-ubuntu2004.so
+mv -f libxls-ubuntu2004.so libxls-v0.59.0-ubuntu2004.so
 tar -xzf dslx_stdlib.tar.gz
 
 driver="$tools/xlsynth/bin/xlsynth-driver"
@@ -39,9 +39,9 @@ if [[ ! -x "$driver" ]]; then
     rustup toolchain install "$toolchain" --profile minimal
     # The rpath lets xlsynth-driver find libxls without LD_LIBRARY_PATH.
     RUSTFLAGS="-C link-args=-Wl,-rpath,$tools/xls" \
-    XLS_DSO_PATH="$tools/xls/libxls-v0.55.0-ubuntu2004.so" \
+    XLS_DSO_PATH="$tools/xls/libxls-v0.59.0-ubuntu2004.so" \
     DSLX_STDLIB_PATH="$tools/xls/xls/dslx/stdlib" \
-    cargo "+$toolchain" install xlsynth-driver --version 0.71.0 --locked --root "$tools/xlsynth"
+    cargo "+$toolchain" install xlsynth-driver --version 0.75.0 --locked --root "$tools/xlsynth"
 fi
 
 asap7_lib_url=https://github.com/The-OpenROAD-Project/asap7sc7p5t_28
@@ -59,6 +59,15 @@ pushd "$tools/asap7"
             7z x "LIB/NLDM/$comp_file" -o"$proj_root"/lib/
         done
     fi
+popd
+
+orfs_url=https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
+mkdir -p "$tools/orfs"
+pushd $tools/orfs
+    if [[ ! -x .git ]]; then
+        git clone --recursive $orfs_url .
+    fi
+    ./build_openroad.sh --local
 popd
 
 "$driver" version
