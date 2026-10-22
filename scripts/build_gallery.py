@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """Build a directory-categorized HTML gallery from plots made by plot_logs.py."""
-
 from __future__ import annotations
 
 import argparse
@@ -18,16 +17,385 @@ from pathlib import Path
 
 
 PAGE_STYLE = """
-body { background: #f6f8fb; color: #172033; font: 16px/1.5 system-ui, sans-serif; margin: 0; }
-main { margin: auto; max-width: 1440px; padding: 2rem; }
-h1 { margin-bottom: .15rem; } .subtitle { color: #5c6577; margin-top: 0; }
-.category { margin-top: 2.5rem; } .comparisons { display: grid; gap: 1.25rem; }
-article { background: #fff; border: 1px solid #dce1eb; border-radius: .75rem; overflow: hidden; box-shadow: 0 2px 5px #1720330d; }
-article h3 { font-size: 1rem; margin: 0; padding: .8rem 1rem; } .variants { display: grid; gap: 1px; background: #dce1eb; }
-figure, .missing { background: #fff; margin: 0; min-width: 0; padding: .75rem; } figcaption { color: #5c6577; font-size: .875rem; font-weight: 700; margin-bottom: .5rem; }
-img { display: block; height: auto; width: 100%; } .missing { color: #70798a; display: grid; min-height: 10rem; place-items: center; text-align: center; }
-a { color: inherit; text-decoration: none; } a:hover img { outline: 2px solid #2855b8; outline-offset: 2px; }
-@media (max-width: 760px) { .variants { grid-template-columns: 1fr !important; } }
+body {
+  background: #f6f8fb;
+  color: #172033;
+  font: 16px/1.5 system-ui, sans-serif;
+  margin: 0;
+}
+
+main {
+  margin: auto;
+  max-width: 1440px;
+  padding: 2rem;
+}
+
+h1 {
+  margin-bottom: .15rem;
+}
+
+.subtitle {
+  color: #5c6577;
+  margin-top: 0;
+}
+
+.category {
+  margin-top: 2.5rem;
+}
+
+.comparisons {
+  display: grid;
+  gap: 1.25rem;
+}
+
+article {
+  background: #fff;
+  border: 1px solid #dce1eb;
+  border-radius: .75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 5px #1720330d;
+}
+
+article h3 {
+  font-size: 1rem;
+  margin: 0;
+  padding: .8rem 1rem;
+}
+
+.variants {
+  display: grid;
+  gap: 1px;
+  background: #dce1eb;
+}
+
+figure {
+  background: #fff;
+  margin: 0;
+  min-width: 0;
+  padding: .75rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+figcaption {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: #5c6577;
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+.figure-label {
+  flex: 1 1 auto;
+  color: #172033;
+}
+
+.figure-download {
+  flex: 0 0 auto;
+  color: #2855b8;
+  font-size: .75rem;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.expand-button {
+  background: #fff;
+  border: 0;
+  color: inherit;
+  cursor: zoom-in;
+  display: block;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.expand-button:focus {
+  outline: none;
+}
+
+.expand-button:hover .chart-image,
+.expand-button:focus-visible .chart-image {
+  outline: 2px solid #2855b8;
+  outline-offset: 2px;
+}
+
+.chart-image {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.missing {
+  background: #fff;
+  color: #70798a;
+  display: grid;
+  margin: 0;
+  min-height: 10rem;
+  min-width: 0;
+  padding: .75rem;
+  place-items: center;
+  text-align: center;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.figure-download {
+  color: #2855b8;
+  text-decoration: underline;
+}
+
+body.lightbox-open {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .variants {
+    grid-template-columns: 1fr !important;
+  }
+
+  main {
+    padding: 1rem;
+  }
+}
+"""
+
+
+LIGHTBOX_STYLE = """
+.lightbox {
+  align-items: center;
+  background: rgba(12, 17, 28, .86);
+  display: none;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 1000;
+}
+
+.lightbox.open {
+  display: flex;
+}
+
+.lightbox-content {
+  background: #fff;
+  border-radius: .75rem;
+  box-shadow: 0 20px 50px #0b122166;
+  display: flex;
+  flex-direction: column;
+  height: min(94vh, 1600px);
+  max-height: 94vh;
+  max-width: 96vw;
+  overflow: hidden;
+  width: min(96vw, 2200px);
+}
+
+.lightbox-header {
+  align-items: center;
+  border-bottom: 1px solid #dce1eb;
+  display: flex;
+  flex: 0 0 auto;
+  gap: .75rem;
+  padding: .75rem 1rem;
+}
+
+#lightbox-caption {
+  color: #172033;
+  flex: 1 1 auto;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.lightbox-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-left: auto;
+}
+
+.lightbox-button {
+  appearance: none;
+  background: #fff;
+  border: 1px solid #cfd6e4;
+  border-radius: .5rem;
+  color: #172033;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  padding: .4rem .7rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lightbox-button:hover,
+.lightbox-button:focus-visible {
+  border-color: #2855b8;
+  color: #173676;
+  background: #eef3ff;
+}
+
+.lightbox-close {
+  font-size: 1.2rem;
+  line-height: 1;
+  padding-inline: .65rem;
+}
+
+.lightbox-body {
+  background: #fff;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.lightbox-image {
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 760px) {
+  .lightbox {
+    padding: 0;
+  }
+
+  .lightbox-content {
+    border-radius: 0;
+    height: 100vh;
+    max-height: 100vh;
+    max-width: 100vw;
+    width: 100vw;
+  }
+
+  .lightbox-header {
+    flex-wrap: wrap;
+  }
+
+  .lightbox-toolbar {
+    width: 100%;
+  }
+
+  #lightbox-caption {
+    width: 100%;
+  }
+}
+"""
+
+
+LIGHTBOX_HTML = """
+<div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Expanded chart">
+  <div class="lightbox-content" role="document">
+    <div class="lightbox-header">
+      <div id="lightbox-caption" aria-live="polite"></div>
+      <div class="lightbox-toolbar">
+        <button id="lightbox-prev" class="lightbox-button" type="button">Previous</button>
+        <button id="lightbox-next" class="lightbox-button" type="button">Next</button>
+        <a id="lightbox-download" class="lightbox-button" href="#" download="chart.png">Download PNG</a>
+        <button id="lightbox-close" class="lightbox-button lightbox-close" type="button" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="lightbox-body">
+      <img id="lightbox-image" class="lightbox-image" alt="">
+    </div>
+  </div>
+</div>
+"""
+
+
+LIGHTBOX_JS = """
+(() => {
+  const lightbox = document.getElementById("lightbox");
+  if (!lightbox) return;
+
+  const closeBtn = document.getElementById("lightbox-close");
+  const prevBtn = document.getElementById("lightbox-prev");
+  const nextBtn = document.getElementById("lightbox-next");
+  const image = document.getElementById("lightbox-image");
+  const caption = document.getElementById("lightbox-caption");
+  const downloadLink = document.getElementById("lightbox-download");
+  const buttons = Array.from(document.querySelectorAll(".expand-button"));
+
+  if (!buttons.length) return;
+
+  let currentIndex = -1;
+  let lastFocused = null;
+
+  function fileNameFromPath(path) {
+    const clean = (path || "chart.png").split("?")[0].split("#")[0];
+    const parts = clean.split("/");
+    return parts[parts.length - 1] || "chart.png";
+  }
+
+  function show(index) {
+    currentIndex = (index + buttons.length) % buttons.length;
+    const button = buttons[currentIndex];
+
+    const src = button.getAttribute("data-src") || "";
+    const alt = button.getAttribute("data-alt") || "Chart";
+    const cap = button.getAttribute("data-caption") || "";
+
+    image.src = src;
+    image.alt = alt;
+    caption.textContent = cap;
+
+    downloadLink.href = src;
+    downloadLink.setAttribute("download", fileNameFromPath(src));
+
+    lightbox.classList.add("open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.classList.add("lightbox-open");
+
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function close() {
+    lightbox.classList.remove("open");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("lightbox-open");
+
+    image.removeAttribute("src");
+    image.removeAttribute("alt");
+
+    if (lastFocused) lastFocused.focus();
+    currentIndex = -1;
+  }
+
+  buttons.forEach((button, i) => {
+    button.addEventListener("click", () => {
+      lastFocused = button;
+      show(i);
+    });
+  });
+
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  if (prevBtn) prevBtn.addEventListener("click", () => show(currentIndex - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => show(currentIndex + 1));
+
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox) close();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!lightbox.classList.contains("open")) return;
+
+    if (event.key === "Escape") {
+      close();
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      show(currentIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      show(currentIndex + 1);
+    }
+  });
+})();
 """
 
 
@@ -39,7 +407,11 @@ def load_manifest(plots_dir: Path) -> list[dict[str, str]]:
             return contents
 
     return [
-        {"category": item.parent.as_posix() if item.parent != Path(".") else "Uncategorized", "log": "", "plot": item.as_posix()}
+        {
+            "category": item.parent.as_posix() if item.parent != Path(".") else "Uncategorized",
+            "log": "",
+            "plot": item.as_posix(),
+        }
         for item in sorted(plots_dir.rglob("*.png"))
     ]
 
@@ -58,16 +430,19 @@ def main() -> int:
 
     plots_dirs = [plots_dir.resolve() for plots_dir in args.plots_dirs]
     output_path = args.output.resolve()
+
     missing_directories = [str(plots_dir) for plots_dir in plots_dirs if not plots_dir.is_dir()]
     if missing_directories:
         print(f"Plots directory does not exist: {', '.join(missing_directories)}", file=sys.stderr)
         return 2
+
     directory_names = [plots_dir.name for plots_dir in plots_dirs]
     if len(set(directory_names)) != len(directory_names):
         print("Plot directory names must be unique so they can label comparisons.", file=sys.stderr)
         return 2
 
     categories: dict[str, dict[str, dict[str, Path]]] = defaultdict(lambda: defaultdict(dict))
+
     for plots_dir in plots_dirs:
         for item in load_manifest(plots_dir):
             plot_file = plots_dir / item["plot"]
@@ -76,38 +451,89 @@ def main() -> int:
                 categories[item["category"]][chart_key][plots_dir.name] = plot_file
 
     sections: list[str] = []
+
     for category in sorted(categories):
         cards = []
+
         for chart_key, variants in sorted(categories[category].items()):
             title = Path(chart_key).stem.replace("_", " ")
+            title_esc = html.escape(title)
             columns = []
+
             for directory_name in directory_names:
                 image_path = variants.get(directory_name)
+
                 if image_path is None:
-                    columns.append(f'<div class="missing"><strong>{html.escape(directory_name)}</strong><br>Plot not found</div>')
+                    columns.append(
+                        '<div class="missing"><strong>'
+                        + html.escape(directory_name)
+                        + "</strong><br>Plot not found</div>"
+                    )
                     continue
+
                 asset_path = output_path.parent / "assets" / directory_name / Path(chart_key).with_suffix(".png")
                 asset_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(image_path, asset_path)
+
                 relative_image = Path(os.path.relpath(asset_path, output_path.parent)).as_posix()
+
+                image_href = html.escape(relative_image)
+                directory_esc = html.escape(directory_name)
+                alt_text = html.escape(f"{title} from {directory_name}")
+                caption_text = html.escape(f"{directory_name} · {title}")
+
                 columns.append(
-                    f'<figure><figcaption>{html.escape(directory_name)}</figcaption><a href="{html.escape(relative_image)}">'
-                    f'<img src="{html.escape(relative_image)}" alt="{html.escape(title)} from {html.escape(directory_name)}" loading="lazy"></a></figure>'
+                    "<figure>"
+                    "<figcaption>"
+                    f'<span class="figure-label">{directory_esc}</span>'
+                    f'<a class="figure-download" href="{image_href}" download>Download</a>'
+                    "</figcaption>"
+                    f'<button type="button" class="expand-button" '
+                    f'data-src="{image_href}" '
+                    f'data-alt="{alt_text}" '
+                    f'data-caption="{caption_text}" '
+                    f'aria-label="Expand chart {title_esc} from {directory_esc}">'
+                    f'<img class="chart-image" src="{image_href}" alt="{alt_text}" loading="lazy">'
+                    "</button>"
+                    "</figure>"
                 )
+
             cards.append(
-                f'<article><h3>{html.escape(title)}</h3><div class="variants" '
-                f'style="grid-template-columns: repeat({len(directory_names)}, minmax(0, 1fr));">{"".join(columns)}</div></article>'
+                "<article>"
+                f"<h3>{title_esc}</h3>"
+                f'<div class="variants" style="grid-template-columns: repeat({len(directory_names)}, minmax(0, 1fr));">'
+                f'{"".join(columns)}'
+                "</div></article>"
             )
-        sections.append(f'<section class="category"><h2>{html.escape(category)}</h2><div class="comparisons">{"".join(cards)}</div></section>')
+
+        sections.append(
+            '<section class="category">'
+            f'<h2>{html.escape(category)}</h2>'
+            f'<div class="comparisons">{"".join(cards)}</div>'
+            "</section>"
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    joined_sections = "".join(sections) or "<p>No PNG plots found.</p>"
+
     output_path.write_text(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-        f"<title>Benchmark plots</title><style>{PAGE_STYLE}</style></head><body><main>"
-        f"<h1>Benchmark plot comparison</h1><p class=\"subtitle\">{sum(map(len, categories.values()))} matched plot(s) across {len(categories)} categor{ 'y' if len(categories) == 1 else 'ies'} and {len(plots_dirs)} plot director{'y' if len(plots_dirs) == 1 else 'ies'}.</p>"
-        f"{''.join(sections) or '<p>No PNG plots found.</p>'}</main></body></html>\n",
+        "<!doctype html>"
+        '<html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        "<title>Benchmark plots</title>"
+        f"<style>{PAGE_STYLE}{LIGHTBOX_STYLE}</style>"
+        "</head><body><main>"
+        "<h1>Benchmark plot comparison</h1>"
+        f'<p class="subtitle">{sum(map(len, categories.values()))} matched plot(s) across '
+        f"{len(categories)} categor{'y' if len(categories) == 1 else 'ies'} and "
+        f"{len(plots_dirs)} plot director{'y' if len(plots_dirs) == 1 else 'ies'}.</p>"
+        f"{joined_sections}"
+        f"{LIGHTBOX_HTML}<script>{LIGHTBOX_JS}</script>"
+        "</main></body></html>\n",
         encoding="utf-8",
     )
+
     print(f"Created {output_path}")
     return 0
 
