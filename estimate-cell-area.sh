@@ -27,16 +27,33 @@ codegen=tools/xls/codegen_main-ubuntu2004
 
 mkdir -p $build_dir
 
-echo "1/5  DSLX -> IR -> g8r"
-./show-raw-g8r.sh "$design" "$top"
-
-echo
-echo "2/5  Prepare ASAP7"
+echo "1/7  Prepare ASAP7"
 "$driver" lib2proto "${libs[@]}" \
     --include-timing \
     --output build/asap7.proto
 
-echo "3/5  g8r -> ASAP7 cells -> area"
+echo "2/7  DSLX -> optimized IR"
+"$driver" dslx2ir \
+    --dslx_input_file "$design" --dslx_top "$top" --opt true \
+    > "$output.opt.ir"
+
+start_g8r=$(date +%s%3N)
+echo "3/7  Prepare IR for gates"
+"$driver" ir-prep-for-gates "$output.opt.ir" \
+    --enable-formal-array-alias-analysis false \
+    > "$output.prepared.ir"
+diff -u "$output.opt.ir" "$output.prepared.ir" | sed -n '/^[-+]  /p' || true
+
+start_ir2g8r=$(date +%s%3N)
+echo "4/7  IR -> g8r and AIGER"
+"$driver" ir2g8r "$output.opt.ir" \
+    --enable-formal-array-alias-analysis false \
+    --aiger-out "$output.aag" \
+    --stats-out "$output.stats.json" \
+    > "$output.g8r"
+end_ir2g8r=$(date +%s%3N)
+
+echo "5/7  g8r -> ASAP7 cells -> area"
 "$driver" aig-tech-map "$output.aag" \
     --strategy area \
     --liberty_proto build/asap7.proto \
@@ -48,8 +65,10 @@ echo "3/5  g8r -> ASAP7 cells -> area"
     --module_name "$top" \
     --json_out "$output.g8r-area.json" \
     > /dev/null
+end_g8r=$(date +%s%3N)
 
-echo "4/5  IR -> SystemVerilog -> Yosys/ASAP7 cells"
+start_yosys=$(date +%s%3N)
+echo "6/7  IR -> SystemVerilog -> Yosys/ASAP7 cells"
 "$codegen" \
     --generator=combinational \
     --delay_model=unit \
@@ -60,19 +79,13 @@ echo "4/5  IR -> SystemVerilog -> Yosys/ASAP7 cells"
 
 liberty_args=$(printf ' -liberty %s' "${libs[@]}")
 yosys -q -l "$output.yosys.log" -p \
-    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; abc$liberty_args; opt_clean -purge; write_verilog -noattr -noexpr $output.yosys-mapped.v"
-
-echo "5/5  Yosys cells -> area"
-"$driver" gv-area \
-    --netlist "$output.yosys-mapped.v" \
-    --liberty_proto build/asap7.proto \
-    --module_name "$top" \
-    --json_out "$output.yosys-area.json" \
-    > /dev/null
+    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; abc$liberty_args; opt_clean -purge; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat $liberty_args"
+end_yosys=$(date +%s%3N)
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
-yosys_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.yosys-area.json" | head -1)
+yosys_area=$(cat $output.yosys.log | grep 'Chip area for module' | cut -d ':' -f2)
 
 echo
-echo "Area comparison (ASAP7):"
+echo "Area and time comparison (ASAP7):"
+LC_NUMERIC=C printf '  ir2g8r: %.2f ms\n  g8r:   %.2f ms\n  Yosys: %.2f ms\n' "$((end_ir2g8r - start_ir2g8r))" "$((end_g8r - start_g8r))" "$((end_yosys - start_yosys))"
 LC_NUMERIC=C printf '  g8r:   %.2f um^2\n  Yosys: %.2f um^2\n' "$g8r_area" "$yosys_area"
