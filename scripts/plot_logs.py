@@ -175,6 +175,9 @@ def main() -> int:
     manifest: list[dict[str, str]] = []
     failed = 0
     for log_path in sorted(input_dir.rglob("*.log")):
+        # skip _mutations directory
+        if "_mutations" in log_path.parts:
+            continue
         relative_path = log_path.relative_to(input_dir)
         plot_path = output_dir / relative_path.with_suffix(".png")
         try:
