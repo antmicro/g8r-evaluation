@@ -29,6 +29,12 @@ Logs must have a whitespace-delimited header, a first (label) column, and one or
 
 When a numeric column is named `ratio`, it is rendered as a label above each group of bars instead of as its own bar. The plot also includes that ratio's mean in the legend.
 
+For timing logs whose value columns begin with the three area columns (e.g. `g8r_um2  yosys_um2  ratio`) followed by timing columns, pass `--mode time`. The leading area columns are dropped and only the timing columns are plotted, with the y-axis labelled in milliseconds:
+
+```sh
+python3 plot_logs.py comp_logs --output-dir plots-time --mode time
+```
+
 ## Custom locations
 
 ```sh

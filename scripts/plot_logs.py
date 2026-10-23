@@ -12,6 +12,12 @@ Expected input resembles:
 The first column is used as a category. All remaining columns whose values can
 be parsed as numbers are plotted. The script recursively discovers ``*.log``
 files so newly added folders and logs are included without configuration.
+
+With ``--mode time`` the leading area columns (the three value columns after
+the label, e.g. ``g8r_um2  yosys_um2  ratio``) are dropped and only the
+timing columns are plotted, with the axis labelled in milliseconds:
+    function  g8r_um2  yosys_um2  ratio  orfs_um2  ir2g8r_ms  g8r_ms  yosys_ms
+    arith_add8  3.02  3.12  0.97  10.00     17.00      80.00  201.00
 """
 
 from __future__ import annotations
@@ -46,7 +52,7 @@ def parse_number(value: str) -> float:
     return float(value.replace(",", ""))
 
 
-def parse_log(path: Path) -> LogTable:
+def parse_log(path: Path, time_mode: bool = False) -> LogTable:
     rows: list[list[str]] = []
     for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         line = raw_line.strip()
@@ -54,7 +60,13 @@ def parse_log(path: Path) -> LogTable:
             continue
         cells = re.split(r"\s+", line)
         if len(cells) > 1:
-            rows.append(cells[0:5])
+            if time_mode:
+                # Keep the label column and the timing columns; drop the
+                # leading area columns (g8r_um2, yosys_um2, ratio).
+                cells = cells[:1] + cells[5:]
+            else:
+                cells = cells[0:5]
+            rows.append(cells)
 
     if len(rows) < 2:
         raise ValueError("expected a header and at least one data row")
@@ -86,7 +98,9 @@ def parse_log(path: Path) -> LogTable:
     return LogTable(labels=labels, series=series)
 
 
-def plot_table(table: LogTable, source: Path, destination: Path) -> None:
+def plot_table(
+    table: LogTable, source: Path, destination: Path, ylabel: str = "Value"
+) -> None:
     series_names = list(table.series)
     ratio_names = [name for name in series_names if name.casefold() == "ratio"]
     bar_series_names = [name for name in series_names if name not in ratio_names]
@@ -122,7 +136,7 @@ def plot_table(table: LogTable, source: Path, destination: Path) -> None:
 
     axis.set_title(source.stem.replace("_", " "), pad=20)
     axis.set_xlabel("Function")
-    axis.set_ylabel("Value")
+    axis.set_ylabel(ylabel)
     axis.set_xticks(x_positions, table.labels, rotation=45, ha="right")
     axis.grid(axis="y", alpha=0.25)
     legend_handles, legend_labels = axis.get_legend_handles_labels()
@@ -143,6 +157,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input_dir", nargs="?", type=Path, default=Path("comp_logs"))
     parser.add_argument("--output-dir", type=Path, default=Path("plots"))
+    parser.add_argument(
+        "--mode",
+        choices=("area", "time"),
+        default="area",
+        help="area: plot all numeric columns (default); "
+        "time: drop the leading area columns and plot timing columns only",
+    )
     args = parser.parse_args()
 
     input_dir = args.input_dir.resolve()
@@ -157,7 +178,12 @@ def main() -> int:
         relative_path = log_path.relative_to(input_dir)
         plot_path = output_dir / relative_path.with_suffix(".png")
         try:
-            plot_table(parse_log(log_path), relative_path, plot_path)
+            plot_table(
+                parse_log(log_path, time_mode=args.mode == "time"),
+                relative_path,
+                plot_path,
+                ylabel="time of execution [ms]" if args.mode == "time" else "Value",
+            )
             manifest.append(
                 {
                     "category": relative_path.parent.as_posix() if relative_path.parent != Path(".") else "Uncategorized",
