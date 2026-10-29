@@ -1,5 +1,13 @@
+#!/usr/bin/env bash
+
 # Copyright (c) 2026 Antmicro <www.antmicro.com>
 # SPDX-License-Identifier: Apache-2.0
+
+echo "Usage: ./run-flow.sh"
+echo
+echo "Runs the whole flow, from setup.sh via compare-all.sh to plots"
+echo "and report generation"
+
 
 set -euo pipefail
 

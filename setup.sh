@@ -63,7 +63,7 @@ popd
 
 orfs_url=https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
 mkdir -p "$tools/orfs"
-pushd $tools/orfs
+pushd "$tools"/orfs
     if [[ ! -x .git ]]; then
         git clone --recursive $orfs_url .
     fi

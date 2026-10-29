@@ -7,6 +7,9 @@ set -euo pipefail
 
 usage() {
     echo "Usage: ./show-raw-g8r.sh DESIGN.x TOP"
+    echo -e "\t[DESIGN_PATH]"
+    echo -e "\t[TOP_MODULE]"
+    echo
     echo "Writes optimized IR, prepared IR, g8r, AIGER, and stats to build/."
 }
 

@@ -6,16 +6,22 @@
 set -euo pipefail
 
 usage() {
-    echo "Usage: ./estimate-cell-area.sh DESIGN.x TOP"
+    echo "Usage: ./estimate-cell-area.sh"
+    echo -e "\t[DESIGN_PATH]"
+    echo -e "\t[TOP_MODULE]"
+    echo -e "\t[BUILD_DIR]\t(default: ./build)"
+    echo -e "\t[XLSYNTH_DRIVER_PATH]\t(default: tools/xlsynth/bin/xlsynth-driver)"
+    echo -e "\t[ORFS_PATH]\t(default: tools/orfs)"
     echo
-    echo "Compare g8r and SystemVerilog/Yosys area using the bundled ASAP7 library."
-    echo "Results are written as build/TOP.*."
+    echo "Estimates area of physical design and compares the results"
+    echo "from g8r, Yosys and OpenROAD. Also includes ir2g8r, g8r and Yosys area"
+    echo "estimation execution time. g8r time includes also the time spent inside ir2g8r."
 }
 
 case "${1:-}" in
     ""|-h|--help) usage; exit 0 ;;
 esac
-[[ $# -ge 2 ]] || { usage >&2; exit 2; }
+[[ $# -ge 2 ]] && [[ $# -le 5 ]] || { usage >&2; exit 2; }
 
 design=$1
 top=$2
@@ -26,7 +32,7 @@ driver=${4:-tools/xlsynth/bin/xlsynth-driver}
 codegen=tools/xls/codegen_main-ubuntu2004
 orfs_path=${5:-tools/orfs/}
 
-mkdir -p $build_dir
+mkdir -p "$build_dir"
 
 create_orfs_config() {
     DESIGN_FILE=$1
@@ -48,18 +54,18 @@ create_orfs_config() {
 }
 
 run_orfs() {
-    make -C $orfs_path/flow DESIGN_CONFIG="$(pwd)"/config.mk clean_all synth RESULTS_DIR=res_dir 2>/dev/null > $output.orfs.log
-    make -C $orfs_path/flow DESIGN_CONFIG="$(pwd)"/config.mk floorplan RESULTS_DIR=res_dir 2>/dev/null >> $output.orfs.log
-    make -C $orfs_path/flow DESIGN_CONFIG="$(pwd)"/config.mk cts RESULTS_DIR=res_dir 2>/dev/null >> $output.orfs.log
-    make -C $orfs_path/flow DESIGN_CONFIG="$(pwd)"/config.mk place RESULTS_DIR=res_dir 2>/dev/null >> $output.orfs.log
-    make -C $orfs_path/flow DESIGN_CONFIG="$(pwd)"/config.mk route RESULTS_DIR=res_dir 2>/dev/null >> $output.orfs.log
+    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk clean_all synth RESULTS_DIR=res_dir 2>/dev/null > "$output".orfs.log
+    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk floorplan RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
+    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk cts RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
+    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk place RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
+    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk route RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
 }
 
-echo "design: $design"
-echo "top: $top"
-echo "build_dir :$build_dir"
-echo "driver :$driver"
-echo "ORFS path :$orfs_path"
+echo "DSLX design file: $design"
+echo "Top pub fn name: $top"
+echo "Directory for generated files: $build_dir"
+echo "xlsynth-driver path :$driver"
+echo "OpenROAD flow scripts path: $orfs_path"
 
 echo
 echo "1/7  Prepare ASAP7"
@@ -119,13 +125,13 @@ yosys -q -l "$output.yosys.log" -p \
 end_yosys=$(date +%s%3N)
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
-yosys_area=$(cat $output.yosys.log | grep 'Chip area for module' | cut -d ':' -f2)
+yosys_area=$(cat "$output".yosys.log | grep 'Chip area for module' | cut -d ':' -f2)
 
 echo "7/7  ORFS area estimation"
 create_orfs_config "$output.sv" "$top"
 run_orfs
 
-ORFS_AREA=$(tail -n 10 $output.orfs.log | grep 'Design area' | cut -d' ' -f3)
+ORFS_AREA=$(tail -n 10 "$output".orfs.log | grep 'Design area' | cut -d' ' -f3)
 
 echo
 echo "Timing, area and time comparison (ASAP7):"
