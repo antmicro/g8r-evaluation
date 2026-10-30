@@ -4,6 +4,9 @@ Copyright (c) 2026 [Antmicro](https://www.antmicro.com)
 
 Antmicro's demonstration of area estimation workflows with [xlsynth-crate](https://github.com/xlsynth/xlsynth-crate), [yosys](https://github.com/yosyshq/yosys) and [OpenROAD-flow-scripts](https://github.com/the-openroad-project/openroad-flow-scripts)
 
+The results for the bundled examples are published at
+[antmicro.github.io/g8r-evaluation](https://antmicro.github.io/g8r-evaluation/).
+
 ## Setup
 
 Install the prerequisites and run the setup script:
