@@ -30,7 +30,8 @@ output="$build_dir/$top"
 libs=(lib/*.lib)
 driver=${4:-tools/xlsynth/bin/xlsynth-driver}
 codegen=tools/xls/codegen_main-ubuntu2004
-orfs_path=${5:-tools/orfs/}
+orfs_path=${5:-tools/orfs}
+yosys=$orfs_path/tools/install/yosys/bin/yosys
 
 mkdir -p "$build_dir"
 
@@ -120,7 +121,7 @@ start_yosys=$(date +%s%3N)
     > "$output.sv"
 
 liberty_args=$(printf ' -liberty %s' "${libs[@]}")
-yosys -q -l "$output.yosys.log" -p \
+"$yosys" -q -l "$output.yosys.log" -p \
     "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o run.abc.log  abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat $liberty_args;"
 end_yosys=$(date +%s%3N)
 

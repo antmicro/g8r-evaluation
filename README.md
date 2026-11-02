@@ -12,7 +12,7 @@ The results for the bundled examples are published at
 Install the prerequisites and run the setup script:
 
 ```shell
-sudo apt install build-essential curl protobuf-compiler rustup yosys
+sudo apt install build-essential curl git protobuf-compiler rustup
 ./setup.sh
 ```
 
@@ -22,10 +22,17 @@ for Debian; install it from the
 `curl -L https://github.com -o bazelisk && chmod +x bazelisk`
 
 `setup.sh` downloads the XLS release assets (codegen and stdlib) into
-`tools/xls`, builds `xlsynth-driver` into `tools/xlsynth`, and clones and
-builds OpenROAD-flow-scripts into `tools/orfs`. The first run therefore
+`tools/xls`, builds `xlsynth-driver` into `tools/xlsynth`, clones and builds
+OpenROAD-flow-scripts into `tools/orfs`, and copies the ASAP7 RVT TT Liberty
+files that ORFS ships into `lib/`. The first run therefore
 downloads and builds several large projects. Re-running the script skips
-completed steps.
+completed downloads and the xlsynth-driver build; `build_openroad.sh` runs every
+time, but its builds are incremental.
+
+All tool versions are pinned in the block at the top of `setup.sh`; edit them
+there and re-run the script, which prints the installed versions when it
+finishes. The ORFS commit also pins OpenROAD and Yosys, and the standalone
+Yosys run uses the Yosys built by ORFS.
 
 ## Usage
 
@@ -79,8 +86,8 @@ filter function, length and accumulator width.
 The gate count reported by g8r is useful for comparing versions of a design,
 but it does not correspond to physical area, due to only reporting the gate count. 
 Because of that physical estimate requires additional tools mapping the design to a
-standard-cell library. `estimate-cell-area.sh` uses the bundled ASAP7 library in `lib/`
-(see `lib/README.md`) and computes the area in three ways:
+standard-cell library. `estimate-cell-area.sh` uses the ASAP7 RVT TT Liberty
+files that `setup.sh` copies from ORFS into `lib/` and computes the area in three ways:
 
 1. [`aig-tech-map`](https://github.com/xlsynth/xlsynth-crate/blob/main/xlsynth-driver/src/aig_tech_map.rs) maps the g8r gate graph to ASAP7 cells and `gv-area` sums
    the cell areas. Both of those tools are subprograms of [xlsynth-driver](https://crates.io/crates/xlsynth-driver) 
