@@ -8,11 +8,8 @@
 # --base-function and defaults to the first data row of the input table.
 #
 # Usage:
-#   python plot_ranking.py --input table.tsv --output chart.png \
+#   uv run --locked scripts/plot_ranking.py --input table.tsv --output chart.png \
 #       [--base-function fir_00_base8]
-#
-# Dependencies:
-#   pip install pandas matplotlib
 
 import argparse
 import re

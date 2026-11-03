@@ -9,17 +9,19 @@ The results for the bundled examples are published at
 
 ## Setup
 
-Install the prerequisites and run the setup script:
+Install the prerequisites:
 
 ```shell
 sudo apt install build-essential curl git protobuf-compiler rustup
-./setup.sh
 ```
 
-The OpenROAD build also needs `bazelisk` on the `PATH`, which is not packaged
-for Debian; install it from the
+`setup.sh` also needs `bazelisk` and `uv` on the `PATH`, which are not packaged
+for Debian. Both install into `~/.local/bin`, which must be on the `PATH`.
+
+`bazelisk` builds OpenROAD and runs the Bazel version that OpenROAD pins in
+`.bazelversion`. Install it from the
 [Bazelisk releases](https://github.com/bazelbuild/bazelisk/releases), e.g. on
-Linux x86-64 into `~/.local/bin`, which must be on the `PATH`:
+Linux x86-64:
 
 ```shell
 curl -fL --create-dirs -o ~/.local/bin/bazelisk \
@@ -27,7 +29,18 @@ curl -fL --create-dirs -o ~/.local/bin/bazelisk \
 chmod +x ~/.local/bin/bazelisk
 ```
 
-Bazelisk then runs the Bazel version that OpenROAD pins in `.bazelversion`.
+`uv` installs Python and the packages for the plotting scripts. Install it with
+the [standalone installer](https://docs.astral.sh/uv/getting-started/installation/):
+
+```shell
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then run the setup script:
+
+```shell
+./setup.sh
+```
 
 `setup.sh` downloads the XLS release assets (codegen and stdlib) into
 `tools/xls`, builds `xlsynth-driver` into `tools/xlsynth`, clones and builds
@@ -127,10 +140,12 @@ route it is significantly higher.
 `scripts/` contains three Python scripts that turn the logs written by
 `compare-all.sh` into bar charts, ranking charts against a baseline function,
 and a browsable HTML gallery. See `scripts/README.md` for their usage.
-Install the dependencies with:
+They run with [uv](https://docs.astral.sh/uv/), which installs Python and
+the packages pinned in `uv.lock` into `.venv/`; `setup.sh` does this once, and `uv run --locked` checks it on every
+run:
 
 ```shell
-python3 -m pip install matplotlib numpy pandas
+uv run --locked scripts/plot_logs.py comp_logs --output-dir plots
 ```
 
 `run-flow.sh` runs everything end to end: `setup.sh`, `compare-all.sh` over

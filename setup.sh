@@ -16,12 +16,14 @@ xlsynth_driver_version=0.75.0
 rust_toolchain=nightly-2026-09-01
 orfs_commit=202c7fccbce32e86db899c54b0a0f0484f869cc3
 
-for command in cc curl git make protoc rustup bazelisk; do
+for command in cc curl git make protoc rustup bazelisk uv; do
     command -v "$command" >/dev/null || { echo "Cannot find $command; see README.md" >&2; exit 1; }
 done
 
 proj_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 tools="$proj_root/tools"
+uv sync --locked --project "$proj_root"
+
 mkdir -p "$tools/xls"
 cd "$tools/xls"
 
