@@ -99,19 +99,18 @@ echo "2/7  DSLX -> optimized IR"
     > "$output.opt.ir"
 
 echo "3/7  Prepare IR for gates"
-start_g8r=$(date +%s%3N)
 "$driver" ir-prep-for-gates "$output.opt.ir" \
     --enable-formal-array-alias-analysis false \
     > "$output.prepared.ir"
 diff -u "$output.opt.ir" "$output.prepared.ir" | sed -n '/^[-+]  /p' || true
 
 echo "4/7  IR -> g8r"
+start_g8r=$(date +%s%3N)
 start_ir2g8r=$(date +%s%3N)
 "$driver" ir2g8r "$output.opt.ir" \
     --enable-formal-array-alias-analysis false \
     --aiger-out "$output.aag" \
-    --stats-out "$output.stats.json" \
-    > "$output.g8r"
+    > /dev/null
 end_ir2g8r=$(date +%s%3N)
 
 echo "5/7  g8r -> ASAP7 cells -> area"
