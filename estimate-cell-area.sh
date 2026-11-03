@@ -104,44 +104,61 @@ echo "3/7  Prepare IR for gates"
     > "$output.prepared.ir"
 diff -u "$output.opt.ir" "$output.prepared.ir" | sed -n '/^[-+]  /p' || true
 
-echo "4/7  IR -> g8r"
-start_g8r=$(date +%s%3N)
-start_ir2g8r=$(date +%s%3N)
-"$driver" ir2g8r "$output.opt.ir" \
-    --enable-formal-array-alias-analysis false \
-    --aiger-out "$output.aag" \
-    > /dev/null
-end_ir2g8r=$(date +%s%3N)
-
-echo "5/7  g8r -> ASAP7 cells -> area"
-"$driver" aig-tech-map "$output.aag" \
-    --strategy area \
-    --liberty_proto "$build_dir/asap7.proto" \
-    --module_name "$top" \
-    --netlist_out "$output.g8r-mapped.v" \
-    > "$output.aig-tech-map.log"
-"$driver" gv-area \
-    --netlist "$output.g8r-mapped.v" \
-    --liberty_proto "$build_dir/asap7.proto" \
-    --module_name "$top" \
-    --json_out "$output.g8r-area.json" \
-    > /dev/null
-end_g8r=$(date +%s%3N)
-
-echo "6/7  IR -> SystemVerilog -> Yosys/ASAP7 cells"
-start_yosys=$(date +%s%3N)
-"$codegen" \
-    --generator=combinational \
-    --delay_model=unit \
-    --use_system_verilog \
-    --module_name="$top" \
-    "$output.opt.ir" \
-    > "$output.sv"
-
 liberty_args=$(printf ' -liberty %s' "${libs[@]}")
-"$yosys" -q -l "$output.yosys.log" -p \
-    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat$area_liberty_args;"
-end_yosys=$(date +%s%3N)
+# Run both flows in each iteration, so load affects them alike.
+timing_runs=${TIMING_RUNS:-5}
+((timing_runs >= 1)) || { echo "TIMING_RUNS must be >= 1" >&2; exit 2; }
+TIMEFORMAT='%3R'
+# Run a command; print its wall time in ms.
+timed() {
+    local t
+    t=$( { time "$@" 2>&4; } 4>&2 2>&1 ) || return
+    set -- $t
+    echo "$((10#${1/[.,]/}))"
+}
+run_ir2g8r() {
+    "$driver" ir2g8r "$output.opt.ir" \
+        --enable-formal-array-alias-analysis false \
+        --aiger-out "$output.aag" \
+        > /dev/null
+}
+run_g8r_mapping() {
+    "$driver" aig-tech-map "$output.aag" \
+        --strategy area \
+        --liberty_proto "$build_dir/asap7.proto" \
+        --module_name "$top" \
+        --netlist_out "$output.g8r-mapped.v" \
+        > "$output.aig-tech-map.log"
+    "$driver" gv-area \
+        --netlist "$output.g8r-mapped.v" \
+        --liberty_proto "$build_dir/asap7.proto" \
+        --module_name "$top" \
+        --json_out "$output.g8r-area.json" \
+        > /dev/null
+}
+run_yosys() {
+    "$codegen" \
+        --generator=combinational \
+        --delay_model=unit \
+        --use_system_verilog \
+        --module_name="$top" \
+        "$output.opt.ir" \
+        > "$output.sv"
+
+    "$yosys" -q -l "$output.yosys.log" -p \
+        "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat$area_liberty_args;"
+}
+ir2g8r_ms=() g8r_ms=() yosys_ms=()
+for ((run = 0; run <= timing_runs; run++)); do
+    echo "4-6/7  Run $run/$timing_runs: IR -> g8r -> ASAP7 cells, IR -> SystemVerilog -> Yosys/ASAP7 cells"
+    ir2g8r=($(timed run_ir2g8r))
+    mapping=($(timed run_g8r_mapping))
+    yosys_run=($(timed run_yosys))
+    ((run > 0)) || continue # run 0 is a warm-up
+    ir2g8r_ms+=("${ir2g8r[0]}")
+    g8r_ms+=($((ir2g8r[0] + mapping[0])))
+    yosys_ms+=("${yosys_run[0]}")
+done
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
 yosys_area=$(sed -n 's/.*Chip area for module.*: *//p' "$output".yosys.log)
@@ -160,7 +177,20 @@ else
     require_area ORFS "$ORFS_AREA" "$output.orfs.log"
 fi
 
+median() {
+    printf '%s\n' "$@" | sort -n | sed -n "$((($# + 1) / 2))p"
+}
+
 echo
 echo "Timing, area and time comparison (ASAP7):"
-LC_NUMERIC=C printf '  ir2g8r:         %.2f ms\n  g8r:            %.2f ms\n  Yosys:          %.2f ms\n' "$((end_ir2g8r - start_ir2g8r))" "$((end_g8r - start_g8r))" "$((end_yosys - start_yosys))"
+# Median wall time (read by compare-all.sh) and its range over the runs.
+timing_line() {
+    local wall=($2)
+    local range=($(printf '%s\n' "${wall[@]}" | sort -n | sed -n '1p;$p'))
+    LC_NUMERIC=C printf '  %-16s%.2f ms  (min %.2f, max %.2f ms over %d runs)\n' \
+        "$1:" "$(median "${wall[@]}")" "${range[0]}" "${range[-1]}" "${#wall[@]}"
+}
+timing_line ir2g8r "${ir2g8r_ms[*]}"
+timing_line g8r "${g8r_ms[*]}"
+timing_line Yosys "${yosys_ms[*]}"
 LC_NUMERIC=C printf '  g8r:            %.2f um^2\n  Yosys:          %.2f um^2\n  ORFS:           %.2f um^2\n' "$g8r_area" "$yosys_area" "$ORFS_AREA"

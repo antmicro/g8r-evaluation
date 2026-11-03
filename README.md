@@ -72,6 +72,8 @@ and writes the intermediate IR, g8r and AIGER files to
 `estimate-cell-area.sh` - estimates area of physical design and compares the results
 from `g8r`, `Yosys` and `OpenROAD`. Also includes `ir2g8r`, `g8r` and `Yosys` area 
 estimation execution time. g8r time includes also the time spent inside ir2g8r.
+Each time is the median of `TIMING_RUNS` runs (default 5) after a warm-up run.
+Each time line also shows the range of the wall time over the runs.
 Set `SKIP_ORFS=1` to skip the slow ORFS place-and-route run; the ORFS area is
 then reported as 0, and `compare-all.sh` leaves out the `orfs_um2` column.
 Intermediate files are written to `build/TOP.*`. Optional positional arguments
