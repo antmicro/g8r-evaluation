@@ -2,17 +2,19 @@
 
 Copyright (c) 2026 [Antmicro](https://www.antmicro.com)
 
-The first three scripts turn benchmark logs and summary tables into plots and a browsable HTML gallery. They recursively discover every `*.log` file, so folders and files added later require no configuration.
+Three scripts turn benchmark logs and summary tables into individual plots and a browsable HTML gallery. They recursively discover every `*.log` file, so folders and files added later require no configuration.
+`commonize_ports.py` scripts is used for `kepler-formal` logical verification, it creates wrapper module for `g8r` mapped verilog to have the same input/output ports as `yosys` generated one.
 
 | Script | Purpose |
 | --- | --- |
 | `plot_logs.py` | One PNG bar chart per `*.log` benchmark log |
 | `plot_ranking.py` | Ranking chart of `g8r_um2`/`yosys_um2` vs a baseline from a summary table |
-| `build_gallery.py` | HTML gallery over plot directories, plus an optional rankings subsite |
+| `build_gallery.py` | HTML gallery over plot directories, plus optional logical-equivalence table and rankings subsite |
 | `phases.py` | Time of each pass from timestamped tool output, for `time-passes.sh` |
 | `plot_passes.py` | Time per stage and largest passes of each flow, from `time-passes.sh` |
 | `flows_report.py` | `report.md` and charts from the output of `analyze-flows.sh` |
 | `plot_style.py` | Colors, labels and axis style of `plot_passes.py` and `flows_report.py` |
+| `commonize_ports.py` | Makes `g8r` generated mapped verilog have the same input/output ports as `yosys` generated one |
 
 ## Install dependencies
 
@@ -67,9 +69,35 @@ Columns are selected by name. By default every column except the timing ones (na
 uv run --locked scripts/plot_logs.py comp_logs --output-dir plots-time --mode time
 ```
 
+## Logical equivalence table
+
+The kepler-formal verdicts for the g8r vs. Yosys mapped designs are collected in a designated equivalence log (e.g. `equivalence.log`), a whitespace-delimited table with a `function` column and a `kepler` verdict column, as printed by `check-g8r-yosys-equiv.sh`:
+
+```
+function                  kepler
+adler32_seq               PROVEN EQUAL
+arith_div32               PARTIALLY PROVEN EQUAL
+```
+
+Passing `--equivalence-log` makes the gallery read that table and render a summary (function, verdict) above the plot charts:
+
+```sh
+python3 build_gallery.py plots --output site/index.html --equivalence-log equivalence.log
+```
+
+Verdicts are colour-coded: green for `PROVEN EQUAL`, amber for `PARTIALLY PROVEN EQUAL`, red for `DEFINITELY UNEQUAL`, and grey for `INCONCLUSIVE`, `UNKNOWN RETURN VALUE` or missing values (checks that were not run show as *not run*).
+
 ## Custom locations
 
 ```sh
 uv run --locked scripts/plot_logs.py /path/to/logs --output-dir /path/to/plots
 uv run --locked scripts/build_gallery.py /path/to/plots --output /path/to/site/index.html
+```
+
+## Commonize input/output port names
+
+`commonize_ports.py` wraps existing `g8r` mapped verilog into helper module that has the same input/output ports as `yosys` mapped one. It creates resulting wrapped verilog inside the same path as original `g8r` verilog, by adding `_wrapped` postfix.
+
+```sh
+python3 commonize_ports.py input_verilog.v
 ```

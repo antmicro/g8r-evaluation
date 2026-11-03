@@ -18,6 +18,8 @@ set -euo pipefail
 uv run --locked ./scripts/plot_logs.py ./examples_logs --mode time --output-dir ./plots_examples_time
 uv run --locked ./scripts/plot_logs.py ./examples_logs --mode area --output-dir ./plots_examples
 
+./check-g8r-yosys-equiv.sh ./build/examples | tee examples_logs/equivalence.log
+
 mkdir -p ranking_plots
 
 uv run --locked ./scripts/plot_ranking.py --input ./examples_logs/_mutations/chained.log --output ranking_plots/operations_mutations.png --base-function baseline
@@ -26,4 +28,4 @@ uv run --locked ./scripts/plot_ranking.py --input ./examples_logs/_mutations/fir
 
 mkdir -p report
 
-uv run --locked ./scripts/build_gallery.py --output report/index.html ./plots_examples ./plots_examples_time --ranking-plots ./ranking_plots/*
+uv run --locked ./scripts/build_gallery.py --output report/index.html ./plots_examples ./plots_examples_time --ranking-plots ./ranking_plots/* --equivalence-log examples_logs/equivalence.log

@@ -15,6 +15,7 @@ xls_stdlib_sha256=ce4de2fcf79f960ade7987cbab9c1d1e2e4d2a2be4372aff8f18de69e90855
 xlsynth_driver_version=0.75.0
 rust_toolchain=nightly-2026-09-01
 orfs_commit=202c7fccbce32e86db899c54b0a0f0484f869cc3
+kepler_commit=38a26b8daac08f581c79a154d3eb817432248d48
 
 for command in cc curl git make protoc rustup bazelisk uv; do
     command -v "$command" >/dev/null || { echo "Cannot find $command; see README.md" >&2; exit 1; }
@@ -100,6 +101,28 @@ pushd "$tools/orfs"
     ./build_openroad.sh --local
 popd
 
+kepler_formal_url=https://github.com/keplertech/kepler-formal
+mkdir -p "$tools/kepler"
+pushd "$tools"/kepler
+    if [[ ! -x .git ]]; then
+        git clone --recursive $kepler_formal_url .
+        git checkout -q "$kepler_commit"
+        git submodule update --init --recursive
+        bazelisk run -c opt //:install -- $(pwd)
+    fi
+popd
+
+yosys_eqy_url=https://github.com/YosysHQ/eqy
+mkdir -p "$tools/eqy"
+pushd "$tools"/eqy
+    if [[ ! -x .git ]]; then
+        git clone --recursive $yosys_eqy_url .
+        yosys_ver=$(yosys -V | cut -d' ' -f2)
+        git checkout v"$yosys_ver"
+    fi
+    make
+popd
+
 echo
 echo "Installed tool versions:"
 echo "  XLS release:       $xls_version"
@@ -111,3 +134,4 @@ echo "  ORFS commit:       $(git -C "$tools/orfs" rev-parse HEAD)"
 echo "  OpenROAD commit:   $(git -C "$tools/orfs/tools/OpenROAD" rev-parse HEAD)"
 echo "  OpenROAD:          $("$tools/orfs/tools/install/OpenROAD/bin/openroad" -version 2>&1 | head -1)"
 echo "  Yosys:             $("$tools/orfs/tools/install/yosys/bin/yosys" -V 2>&1 | head -1)"
+echo "  kepler-formal:     $("$tools/kepler/bin/kepler-formal" --version 2>&1 | head -1)"

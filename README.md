@@ -112,6 +112,19 @@ arguments are the design directory (default `examples`) and the logs directory
 (default `./comp_logs`). A function whose estimate fails is reported as `FAILED`
 with the path to its error log, and the sweep continues.
 
+`check-g8r-yosys-equiv.sh` runs equvalence checking tool to confirm that yosys and g8r
+generated designs are logically equal. It achieves this by using `scripts/commonize_ports.py`
+script to make input/output port names the same between yosys and g8r generated designs,
+later it runs kepler-formal to actually verify logic equality.
+
+```shell
+./check-g8r-yosys-equiv.sh ./build/examples
+```
+
+The table columns are the function name and result from kepler-formal that
+determines if designs are equal/partially proven equal/inconclusive/definitely
+uneqal.
+
 ## Examples
 
 Designs are grouped by category in `examples/`: arithmetic, logic, XOR-heavy
