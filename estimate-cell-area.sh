@@ -35,6 +35,7 @@ driver=${4:-tools/xlsynth/bin/xlsynth-driver}
 codegen=tools/xls/codegen_main-ubuntu2004
 orfs_path=${5:-tools/orfs}
 yosys=$orfs_path/tools/install/yosys/bin/yosys
+filterlib=$orfs_path/tools/install/yosys/bin/yosys-filterlib
 
 mkdir -p "$build_dir"
 
@@ -83,6 +84,14 @@ echo "1/7  Prepare ASAP7"
 "$driver" lib2proto "${libs[@]}" \
     --include-timing \
     --output "$build_dir/asap7.proto"
+# Area-only Liberty files: stat needs no timing tables.
+area_liberty_args=
+for lib in "${libs[@]}"; do
+    area_lib="$build_dir/area-$(basename "$lib")"
+    "$filterlib" <(printf '%s\n' '-*' +/library +/library/cell +/library/cell/area) "$lib" \
+        > "$area_lib" 2> /dev/null
+    area_liberty_args+=" -liberty $area_lib"
+done
 
 echo "2/7  DSLX -> optimized IR"
 "$driver" dslx2ir \
@@ -132,7 +141,7 @@ start_yosys=$(date +%s%3N)
 
 liberty_args=$(printf ' -liberty %s' "${libs[@]}")
 "$yosys" -q -l "$output.yosys.log" -p \
-    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat $liberty_args;"
+    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat$area_liberty_args;"
 end_yosys=$(date +%s%3N)
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
