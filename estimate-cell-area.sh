@@ -52,6 +52,7 @@ create_orfs_config() {
     echo "export PLACE_DENSITY=0.75" >> "$OUT_FILE"
     echo "export TNS_END_PERCENT=100" >> "$OUT_FILE"
     echo "export SYNTH_USE_SYN=1" >> "$OUT_FILE"
+    echo "export SKIP_CTS_REPAIR_TIMING=1" >> "$OUT_FILE"
 }
 
 run_orfs() {

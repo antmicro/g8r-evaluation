@@ -87,6 +87,20 @@ saves each table to a log file so the plots below can be regenerated later:
 ./compare-all.sh examples ./examples_logs
 ```
 
+The positional arguments are the design directory (default `examples`) and the
+logs directory (default `./comp_logs`). To run only a few representative
+examples, set `EXAMPLES_FILTER` to a comma-separated list of `pub fn` names;
+functions not in the list are skipped, and unknown names are reported and
+ignored:
+
+```shell
+EXAMPLES_FILTER=dot8,sha256,zstd ./compare-all.sh
+```
+
+Additionally there is `SKIP_MUTATIONS`, which if defined skips every example
+in `_mutations` directory and `RUN_ONLY_MUTATIONS`, which makes `compare-all.sh`
+run only examples in `_mutations` directory.
+
 The table columns are the function name, the three area estimates in um^2, the
 g8r-to-Yosys ratio, and the ir2g8r, g8r and yosys stage timings in ms. The positional
 arguments are the design directory (default `examples`) and the logs directory
