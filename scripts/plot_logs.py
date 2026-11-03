@@ -122,7 +122,7 @@ def plot_table(
     if ratio_names:
         label_offset = max(maximum_bar_value * 0.025, 0.05)
         for row_index, x_position in enumerate(x_positions):
-            ratio_text = str(f"g8r/yosys: {table.series["ratio"][row_index]:.3g}")
+            ratio_text = f"g8r/yosys: {table.series['ratio'][row_index]:.3g}"
             axis.text(
                 x_position,
                 max(table.series[name][row_index] for name in bar_series_names) + label_offset,

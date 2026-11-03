@@ -84,21 +84,21 @@ directory tree and prints the results as one table per design file. It also
 saves each table to a log file so the plots below can be regenerated later:
 
 ```shell
-./compare-all.sh examples ./lib ./examples_logs
+./compare-all.sh examples ./examples_logs
 ```
 
 The table columns are the function name, the three area estimates in um^2, the
 g8r-to-Yosys ratio, and the ir2g8r, g8r and yosys stage timings in ms. The positional
-arguments are the design directory (default `examples`), the Liberty library
-directory (default `./lib`), the logs directory (default `./comp_logs`) and the
-driver path.
+arguments are the design directory (default `examples`) and the logs directory
+(default `./comp_logs`). A function whose estimate fails is reported as `FAILED`
+with the path to its error log, and the sweep continues.
 
 ## Examples
 
 Designs are grouped by category in `examples/`: arithmetic, logic, XOR-heavy
 logic, multiplexers (`sel`), shifts, control, floating point, and larger
 designs such as CRC, Adler, dot product, SHA-256, zstd and others.
-`examples_mutation/` contains mutation studies: `chained_mut` applies
+`examples/_mutations/` contains mutation studies: `chained` applies
 successive mutations to one baseline function, and `fir` varies the
 filter function, length and accumulator width.
 
@@ -149,7 +149,7 @@ uv run --locked scripts/plot_logs.py comp_logs --output-dir plots
 ```
 
 `run-flow.sh` runs everything end to end: `setup.sh`, `compare-all.sh` over
-`examples/` and `examples_mutation/`, the area and timing plots, the mutation
+`examples/` (including `examples/_mutations/`), the area and timing plots, the mutation
 ranking charts, and finally the HTML report in `report/`:
 
 ```shell

@@ -39,7 +39,7 @@ create_orfs_config() {
     DESIGN_FILE=$1
     DESIGN_NAME=$2
 
-    OUT_FILE="config.mk"
+    OUT_FILE="$output.config.mk"
 
     echo "export PLATFORM=asap7" > "$OUT_FILE"
     echo "export DESIGN_NAME=${DESIGN_NAME}" >> "$OUT_FILE"
@@ -55,11 +55,17 @@ create_orfs_config() {
 }
 
 run_orfs() {
-    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk clean_all synth RESULTS_DIR=res_dir 2>/dev/null > "$output".orfs.log
-    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk floorplan RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
-    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk cts RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
-    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk place RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
-    make -C "$orfs_path"/flow DESIGN_CONFIG="$(pwd)"/config.mk route RESULTS_DIR=res_dir 2>/dev/null >> "$output".orfs.log
+    local orfs=(make -C "$orfs_path"/flow DESIGN_CONFIG="$(realpath "$output.config.mk")"
+                WORK_HOME="$(realpath "$output").orfs")
+    rm -f "$output".orfs.log
+    for stage in clean_all synth floorplan place cts route; do
+        "${orfs[@]}" "$stage" >> "$output".orfs.log 2>&1 ||
+            { echo "ORFS $stage failed, see $output.orfs.log" >&2; exit 1; }
+    done
+}
+
+require_area() {
+    [[ -n $2 ]] || { echo "Could not read $1 area from $3" >&2; exit 1; }
 }
 
 echo "DSLX design file: $design"
@@ -72,7 +78,7 @@ echo
 echo "1/7  Prepare ASAP7"
 "$driver" lib2proto "${libs[@]}" \
     --include-timing \
-    --output build/asap7.proto
+    --output "$build_dir/asap7.proto"
 
 echo "2/7  DSLX -> optimized IR"
 "$driver" dslx2ir \
@@ -98,13 +104,13 @@ end_ir2g8r=$(date +%s%3N)
 echo "5/7  g8r -> ASAP7 cells -> area"
 "$driver" aig-tech-map "$output.aag" \
     --strategy area \
-    --liberty_proto build/asap7.proto \
+    --liberty_proto "$build_dir/asap7.proto" \
     --module_name "$top" \
     --netlist_out "$output.g8r-mapped.v" \
     > "$output.aig-tech-map.log"
 "$driver" gv-area \
     --netlist "$output.g8r-mapped.v" \
-    --liberty_proto build/asap7.proto \
+    --liberty_proto "$build_dir/asap7.proto" \
     --module_name "$top" \
     --json_out "$output.g8r-area.json" \
     > /dev/null
@@ -122,17 +128,20 @@ start_yosys=$(date +%s%3N)
 
 liberty_args=$(printf ' -liberty %s' "${libs[@]}")
 "$yosys" -q -l "$output.yosys.log" -p \
-    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o run.abc.log  abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat $liberty_args;"
+    "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat $liberty_args;"
 end_yosys=$(date +%s%3N)
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
-yosys_area=$(cat "$output".yosys.log | grep 'Chip area for module' | cut -d ':' -f2)
+yosys_area=$(sed -n 's/.*Chip area for module.*: *//p' "$output".yosys.log)
+require_area g8r "$g8r_area" "$output.g8r-area.json"
+require_area Yosys "$yosys_area" "$output.yosys.log"
 
 echo "7/7  ORFS area estimation"
 create_orfs_config "$output.sv" "$top"
 run_orfs
 
-ORFS_AREA=$(tail -n 10 "$output".orfs.log | grep 'Design area' | cut -d' ' -f3)
+ORFS_AREA=$(sed -n 's/.*Design area \([^ ]*\).*/\1/p' "$output".orfs.log | tail -1)
+require_area ORFS "$ORFS_AREA" "$output.orfs.log"
 
 echo
 echo "Timing, area and time comparison (ASAP7):"

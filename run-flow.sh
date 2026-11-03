@@ -20,8 +20,8 @@ uv run --locked ./scripts/plot_logs.py ./examples_logs --mode area --output-dir 
 
 mkdir -p ranking_plots
 
-uv run --locked ./scripts/plot_ranking.py --input ./examples_logs/_mutations/chained/chained.log --output ranking_plots/operations_mutations.png --base-function baseline
-uv run --locked ./scripts/plot_ranking.py --input ./examples_logs/_mutations/fir/fir.log --output ranking_plots/fir_mutations.png --base-function fir_00_base8
+uv run --locked ./scripts/plot_ranking.py --input ./examples_logs/_mutations/chained.log --output ranking_plots/operations_mutations.png --base-function baseline
+uv run --locked ./scripts/plot_ranking.py --input ./examples_logs/_mutations/fir.log --output ranking_plots/fir_mutations.png --base-function fir_00_base8
 
 
 mkdir -p report

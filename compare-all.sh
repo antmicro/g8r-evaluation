@@ -46,11 +46,14 @@ for design_dir in "$design_root"/*; do
 
         for top in $(sed -n 's/^pub fn \([A-Za-z0-9_]*\).*/\1/p' "$design"); do
             build_dir="build/$design_dir/$design_name"
-            if [ -z "$build_dir" ]; then
-                mkdir -p "$build_dir"
-            fi
+            mkdir -p "$build_dir"
 
-            ./estimate-cell-area.sh "$(realpath "$design")" "$top" "$build_dir" 2>/dev/null | tail -6 | awk -v f="$top" '
+            err_log="$build_dir/$top.err.log"
+            if ! result=$(./estimate-cell-area.sh "$(realpath "$design")" "$top" "$build_dir" 2>"$err_log" | tail -6); then
+                echo "FAILED: $design $top, see $err_log" >&2
+                continue
+            fi
+            echo "$result" | awk -v f="$top" '
             {
                 a[NR] = $2
             } END {
