@@ -12,15 +12,16 @@ Three scripts turn benchmark logs and summary tables into individual plots and a
 
 ## Install dependencies
 
-```sh
-python3 -m pip install matplotlib numpy pandas
-```
+The packages are pinned in `uv.lock` in the repository root. Install
+[uv](https://docs.astral.sh/uv/getting-started/installation/) and run the
+scripts from the repository root with `uv run --locked`, as in the examples
+below; it installs the packages into `.venv/` on first use.
 
 ## Generate plots and site
 
 ```sh
-python3 plot_logs.py comp_logs --output-dir plots
-python3 build_gallery.py plots --output site/index.html
+uv run --locked scripts/plot_logs.py comp_logs --output-dir plots
+uv run --locked scripts/build_gallery.py plots --output site/index.html
 ```
 
 Open `site/index.html` in a browser. The gallery groups plots using each log's parent directory.
@@ -28,7 +29,7 @@ Open `site/index.html` in a browser. The gallery groups plots using each log's p
 To compare parameter runs, pass multiple plot directories. Charts with the same source log are placed side by side and labeled with their plots directory name.
 
 ```sh
-python3 build_gallery.py plots-default plots-tuned --output site/index.html
+uv run --locked scripts/build_gallery.py plots-default plots-tuned --output site/index.html
 ```
 
 ## Ranking charts
@@ -36,7 +37,7 @@ python3 build_gallery.py plots-default plots-tuned --output site/index.html
 `plot_ranking.py` builds a chart comparing `g8r_um2`, `yosys_um2` and (when the column is present) `orfs_um2` per function against a baseline, and prints the sorted table and equivalent Mermaid chart code to stdout:
 
 ```sh
-python3 plot_ranking.py --input design.log --output rankings/table_a.png
+uv run --locked scripts/plot_ranking.py --input design.log --output rankings/table_a.png
 ```
 
 By default the first data row of the log is the baseline (the 0% reference). Pass `--base-function NAME` to pick another function; if the named function is missing from the table, the first data row is used.
@@ -46,7 +47,7 @@ The input is a log file from compare-all.sh script run with at least the columns
 Pass the generated ranking PNGs to `build_gallery.py --ranking-plots` to add a `rankings/index.html` subsite with a navigation link from the main comparison page. Ranking charts are grouped by their parent directory name, so keep charts for one comparison in one directory.
 
 ```sh
-python3 build_gallery.py plots --output site/index.html \
+uv run --locked scripts/build_gallery.py plots --output site/index.html \
     --ranking-plots rankings/table_a.png rankings/table_b.png
 ```
 
@@ -59,12 +60,12 @@ When a numeric column is named `ratio`, it is rendered as a label above each gro
 For timing logs whose value columns begin with the three area columns (e.g. `g8r_um2  yosys_um2  ratio`) followed by timing columns, pass `--mode time`. The leading area columns are dropped and only the timing columns are plotted, with the y-axis labelled in milliseconds:
 
 ```sh
-python3 plot_logs.py comp_logs --output-dir plots-time --mode time
+uv run --locked scripts/plot_logs.py comp_logs --output-dir plots-time --mode time
 ```
 
 ## Custom locations
 
 ```sh
-python3 plot_logs.py /path/to/logs --output-dir /path/to/plots
-python3 build_gallery.py /path/to/plots --output /path/to/site/index.html
+uv run --locked scripts/plot_logs.py /path/to/logs --output-dir /path/to/plots
+uv run --locked scripts/build_gallery.py /path/to/plots --output /path/to/site/index.html
 ```
