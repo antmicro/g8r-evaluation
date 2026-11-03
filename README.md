@@ -18,8 +18,16 @@ sudo apt install build-essential curl git protobuf-compiler rustup
 
 The OpenROAD build also needs `bazelisk` on the `PATH`, which is not packaged
 for Debian; install it from the
-[Bazelisk releases](https://github.com/bazelbuild/bazelisk/releases) or via
-`curl -L https://github.com -o bazelisk && chmod +x bazelisk`
+[Bazelisk releases](https://github.com/bazelbuild/bazelisk/releases), e.g. on
+Linux x86-64 into `~/.local/bin`, which must be on the `PATH`:
+
+```shell
+curl -fL --create-dirs -o ~/.local/bin/bazelisk \
+    https://github.com/bazelbuild/bazelisk/releases/download/v1.29.0/bazelisk-linux-amd64
+chmod +x ~/.local/bin/bazelisk
+```
+
+Bazelisk then runs the Bazel version that OpenROAD pins in `.bazelversion`.
 
 `setup.sh` downloads the XLS release assets (codegen and stdlib) into
 `tools/xls`, builds `xlsynth-driver` into `tools/xlsynth`, clones and builds
