@@ -57,8 +57,18 @@ if [[ -n "$examples_filter" ]]; then
     done <<< "$filter_set"
 fi
 
+# Without ORFS (SKIP_ORFS) there is no ORFS area, so leave out its column.
+skip_orfs=0
+if [[ ${SKIP_ORFS:-0} != 0 ]]; then
+    skip_orfs=1
+fi
+
 print_header() {
-    printf '%-25s %10s %10s %6s %10s %10s %10s %10s\n' function g8r_um2 yosys_um2 ratio orfs_um2 ir2g8r_ms g8r_ms yosys_ms
+    if ((skip_orfs)); then
+        printf '%-25s %10s %10s %6s %10s %10s %10s\n' function g8r_um2 yosys_um2 ratio ir2g8r_ms g8r_ms yosys_ms
+    else
+        printf '%-25s %10s %10s %6s %10s %10s %10s %10s\n' function g8r_um2 yosys_um2 ratio orfs_um2 ir2g8r_ms g8r_ms yosys_ms
+    fi
 }
 
 print_header
@@ -105,7 +115,7 @@ for design_dir in "$design_root"/*; do
                 echo "FAILED: $design $top, see $err_log" >&2
                 continue
             fi
-            echo "$result" | awk -v f="$top" '
+            echo "$result" | awk -v f="$top" -v skip_orfs="$skip_orfs" '
             {
                 a[NR] = $2
             } END {
@@ -124,7 +134,10 @@ for design_dir in "$design_root"/*; do
                     printf "   inf"
                 }
 
-                printf " %10.2f %10.2f %10.2f %10.2f ", ORFS_AREA, IR2G8R_TIME, G8R_TIME, YOSYS_TIME
+                if (!skip_orfs) {
+                    printf " %10.2f", ORFS_AREA
+                }
+                printf " %10.2f %10.2f %10.2f ", IR2G8R_TIME, G8R_TIME, YOSYS_TIME
                 printf "\n"
             }' | tee -a "$comp_logs_dir/$(basename "$design_dir")/$(basename "$design" | cut -d '.' -f1).log"
         done

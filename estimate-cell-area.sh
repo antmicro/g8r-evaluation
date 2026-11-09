@@ -16,6 +16,9 @@ usage() {
     echo "Estimates area of physical design and compares the results"
     echo "from g8r, Yosys and OpenROAD. Also includes ir2g8r, g8r and Yosys area"
     echo "estimation execution time. g8r time includes also the time spent inside ir2g8r."
+    echo
+    echo "Set SKIP_ORFS=1 to skip the slow ORFS place-and-route run; the ORFS area"
+    echo "is then reported as 0."
 }
 
 case "${1:-}" in
@@ -137,12 +140,17 @@ yosys_area=$(sed -n 's/.*Chip area for module.*: *//p' "$output".yosys.log)
 require_area g8r "$g8r_area" "$output.g8r-area.json"
 require_area Yosys "$yosys_area" "$output.yosys.log"
 
-echo "7/7  ORFS area estimation"
-create_orfs_config "$output.sv" "$top"
-run_orfs
+if [[ ${SKIP_ORFS:-0} != 0 ]]; then
+    echo "7/7  ORFS area estimation skipped (SKIP_ORFS)"
+    ORFS_AREA=0
+else
+    echo "7/7  ORFS area estimation"
+    create_orfs_config "$output.sv" "$top"
+    run_orfs
 
-ORFS_AREA=$(sed -n 's/.*Design area \([^ ]*\).*/\1/p' "$output".orfs.log | tail -1)
-require_area ORFS "$ORFS_AREA" "$output.orfs.log"
+    ORFS_AREA=$(sed -n 's/.*Design area \([^ ]*\).*/\1/p' "$output".orfs.log | tail -1)
+    require_area ORFS "$ORFS_AREA" "$output.orfs.log"
+fi
 
 echo
 echo "Timing, area and time comparison (ASAP7):"

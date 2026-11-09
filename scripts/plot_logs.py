@@ -13,9 +13,10 @@ The first column is used as a category. All remaining columns whose values can
 be parsed as numbers are plotted. The script recursively discovers ``*.log``
 files so newly added folders and logs are included without configuration.
 
-With ``--mode time`` the leading area columns (the three value columns after
-the label, e.g. ``g8r_um2  yosys_um2  ratio``) are dropped and only the
-timing columns are plotted, with the axis labelled in milliseconds:
+Columns are selected by name: by default all columns except the timing ones
+(names ending in ``_ms``) are plotted, and with ``--mode time`` only the timing
+columns, with the axis labelled in milliseconds. Optional columns such as
+``orfs_um2`` may be missing:
     function  g8r_um2  yosys_um2  ratio  orfs_um2  ir2g8r_ms  g8r_ms  yosys_ms
     arith_add8  3.02  3.12  0.97  10.00     17.00      80.00  201.00
 """
@@ -60,16 +61,15 @@ def parse_log(path: Path, time_mode: bool = False) -> LogTable:
             continue
         cells = re.split(r"\s+", line)
         if len(cells) > 1:
-            if time_mode:
-                # Keep the label column and the timing columns; drop the
-                # leading area columns (g8r_um2, yosys_um2, ratio).
-                cells = cells[:1] + cells[5:]
-            else:
-                cells = cells[0:5]
             rows.append(cells)
 
     if len(rows) < 2:
         raise ValueError("expected a header and at least one data row")
+
+    # Select the columns by name, so that optional columns (e.g. orfs_um2)
+    # may be missing: the timing columns end in _ms, the rest are areas.
+    keep = [0] + [i for i, name in enumerate(rows[0]) if i and name.endswith("_ms") == time_mode]
+    rows = [[row[i] for i in keep if i < len(row)] for row in rows]
 
     header = rows[0]
     data_rows = rows[1:]
