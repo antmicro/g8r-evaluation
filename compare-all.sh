@@ -117,7 +117,8 @@ for design_dir in "$design_root"/*; do
             fi
             echo "$result" | awk -v f="$top" -v skip_orfs="$skip_orfs" '
             {
-                a[NR] = $2
+                # CPU time (field 5) of the timing lines, then the areas.
+                a[NR] = NR <= 3 ? $5 : $2
             } END {
                 IR2G8R_TIME = a[1];
                 G8R_TIME = a[2];

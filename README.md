@@ -73,7 +73,8 @@ and writes the intermediate IR, g8r and AIGER files to
 from `g8r`, `Yosys` and `OpenROAD`. Also includes `ir2g8r`, `g8r` and `Yosys` area 
 estimation execution time. g8r time includes also the time spent inside ir2g8r.
 Each time is the median of `TIMING_RUNS` runs (default 5) after a warm-up run.
-Each time line also shows the range of the wall time over the runs.
+Each time line also shows the median CPU time (user + system) and the range of
+the wall time over the runs; CPU time is less affected by other load on the machine.
 Set `SKIP_ORFS=1` to skip the slow ORFS place-and-route run; the ORFS area is
 then reported as 0, and `compare-all.sh` leaves out the `orfs_um2` column.
 Intermediate files are written to `build/TOP.*`. Optional positional arguments
@@ -106,7 +107,7 @@ in `_mutations` directory and `RUN_ONLY_MUTATIONS`, which makes `compare-all.sh`
 run only examples in `_mutations` directory.
 
 The table columns are the function name, the three area estimates in um^2, the
-g8r-to-Yosys ratio, and the ir2g8r, g8r and yosys stage timings in ms. The positional
+g8r-to-Yosys ratio, and the ir2g8r, g8r and yosys stage CPU times in ms. The positional
 arguments are the design directory (default `examples`) and the logs directory
 (default `./comp_logs`). A function whose estimate fails is reported as `FAILED`
 with the path to its error log, and the sweep continues.

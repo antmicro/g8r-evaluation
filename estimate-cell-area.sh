@@ -108,13 +108,13 @@ liberty_args=$(printf ' -liberty %s' "${libs[@]}")
 # Run both flows in each iteration, so load affects them alike.
 timing_runs=${TIMING_RUNS:-5}
 ((timing_runs >= 1)) || { echo "TIMING_RUNS must be >= 1" >&2; exit 2; }
-TIMEFORMAT='%3R'
-# Run a command; print its wall time in ms.
+TIMEFORMAT='%3R %3U %3S'
+# Run a command; print its wall and CPU (user + system) time in ms.
 timed() {
     local t
     t=$( { time "$@" 2>&4; } 4>&2 2>&1 ) || return
     set -- $t
-    echo "$((10#${1/[.,]/}))"
+    echo "$((10#${1/[.,]/})) $((10#${2/[.,]/} + 10#${3/[.,]/}))"
 }
 run_ir2g8r() {
     "$driver" ir2g8r "$output.opt.ir" \
@@ -148,7 +148,7 @@ run_yosys() {
     "$yosys" -q -l "$output.yosys.log" -p \
         "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat$area_liberty_args;"
 }
-ir2g8r_ms=() g8r_ms=() yosys_ms=()
+ir2g8r_ms=() g8r_ms=() yosys_ms=() ir2g8r_cpu=() g8r_cpu=() yosys_cpu=()
 for ((run = 0; run <= timing_runs; run++)); do
     echo "4-6/7  Run $run/$timing_runs: IR -> g8r -> ASAP7 cells, IR -> SystemVerilog -> Yosys/ASAP7 cells"
     ir2g8r=($(timed run_ir2g8r))
@@ -158,6 +158,9 @@ for ((run = 0; run <= timing_runs; run++)); do
     ir2g8r_ms+=("${ir2g8r[0]}")
     g8r_ms+=($((ir2g8r[0] + mapping[0])))
     yosys_ms+=("${yosys_run[0]}")
+    ir2g8r_cpu+=("${ir2g8r[1]}")
+    g8r_cpu+=($((ir2g8r[1] + mapping[1])))
+    yosys_cpu+=("${yosys_run[1]}")
 done
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
@@ -183,14 +186,14 @@ median() {
 
 echo
 echo "Timing, area and time comparison (ASAP7):"
-# Median wall time (read by compare-all.sh) and its range over the runs.
+# Median wall time, CPU time (read by compare-all.sh) and wall-time range.
 timing_line() {
-    local wall=($2)
+    local wall=($2) cpu=($3)
     local range=($(printf '%s\n' "${wall[@]}" | sort -n | sed -n '1p;$p'))
-    LC_NUMERIC=C printf '  %-16s%.2f ms  (min %.2f, max %.2f ms over %d runs)\n' \
-        "$1:" "$(median "${wall[@]}")" "${range[0]}" "${range[-1]}" "${#wall[@]}"
+    LC_NUMERIC=C printf '  %-16s%.2f ms  (CPU %.2f ms; wall min %.2f, max %.2f ms over %d runs)\n' \
+        "$1:" "$(median "${wall[@]}")" "$(median "${cpu[@]}")" "${range[0]}" "${range[-1]}" "${#wall[@]}"
 }
-timing_line ir2g8r "${ir2g8r_ms[*]}"
-timing_line g8r "${g8r_ms[*]}"
-timing_line Yosys "${yosys_ms[*]}"
+timing_line ir2g8r "${ir2g8r_ms[*]}" "${ir2g8r_cpu[*]}"
+timing_line g8r "${g8r_ms[*]}" "${g8r_cpu[*]}"
+timing_line Yosys "${yosys_ms[*]}" "${yosys_cpu[*]}"
 LC_NUMERIC=C printf '  g8r:            %.2f um^2\n  Yosys:          %.2f um^2\n  ORFS:           %.2f um^2\n' "$g8r_area" "$yosys_area" "$ORFS_AREA"
