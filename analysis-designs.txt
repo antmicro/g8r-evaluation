@@ -1,0 +1,25 @@
+# Functions analyzed by analyze-flows.sh: one per design group or behavior,
+# from small to large designs.
+logic_xor32
+ctrl_clz32
+ctrl_max4x16
+arith_add16
+xor_crc32
+arith_add64
+arith_sum4x64
+xor_popcount64
+shll64
+sel16x64
+update8x64
+adler32_seq
+fp_bf16_add
+xor_crc512
+arith_add512
+arith_mul16
+arith_mac16
+arith_div16
+shll512
+fp_f32_add
+fp_f32_mul
+fir_00_base8
+sha256_chunk_w_table

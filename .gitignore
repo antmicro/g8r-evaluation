@@ -2,4 +2,6 @@
 /tools/
 /lib/
 /.venv/
+/flow_analysis/
+/flow_analysis_html/
 __pycache__/
