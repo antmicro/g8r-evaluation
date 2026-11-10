@@ -1,0 +1,108 @@
+diff --git a/xlsynth-driver/src/aig_tech_map.rs b/xlsynth-driver/src/aig_tech_map.rs
+index 1e5e5672..01a593c3 100644
+--- a/xlsynth-driver/src/aig_tech_map.rs
++++ b/xlsynth-driver/src/aig_tech_map.rs
+@@ -291,11 +291,13 @@ fn run_aig_tech_map(matches: &ArgMatches) -> Result<()> {
+     } else {
+         None
+     };
++    log::info!("g8r-phase: techmap-load-aiger");
+     let gate_fn =
+         load_aiger_auto_from_path(Path::new(aig_input_file), GateBuilderOptions::no_opt())
+             .map_err(anyhow::Error::msg)
+             .with_context(|| format!("failed to load AIG '{aig_input_file}'"))?
+             .gate_fn;
++    log::info!("g8r-phase: techmap-load-liberty");
+     let lib = load_liberty_from_path(liberty_proto_path).with_context(|| {
+         format!(
+             "failed to load Liberty proto '{}'",
+@@ -326,7 +328,9 @@ fn run_aig_tech_map(matches: &ArgMatches) -> Result<()> {
+             (mapped, report, summary)
+         }
+         "area" => {
++            log::info!("g8r-phase: techmap-cell-index");
+             let library = AreaMappingLibrary::new(&lib)?;
++            log::info!("g8r-phase: techmap-cover");
+             let mapped =
+                 map_gatefn_to_area_netlist(&gate_fn, &library).context("area mapping failed")?;
+             let summary = format!(
+@@ -348,6 +352,7 @@ fn run_aig_tech_map(matches: &ArgMatches) -> Result<()> {
+     report["module"] = mapped.interner.resolve(mapped.module.name).unwrap().into();
+     report["cell_count"] = mapped.module.instances.len().into();
+     report["net_count"] = mapped.nets.len().into();
++    log::info!("g8r-phase: techmap-emit");
+     let netlist_text = emit_module_as_netlist_text(&mapped.module, &mapped.nets, &mapped.interner)
+         .context("failed to emit mapped netlist text")?;
+     if let (Some(json_path), Some(stderr)) = (json_out, stderr.as_ref()) {
+diff --git a/xlsynth-g8r/src/gate_fn_optimize.rs b/xlsynth-g8r/src/gate_fn_optimize.rs
+index 4c48876a..a84f85ee 100644
+--- a/xlsynth-g8r/src/gate_fn_optimize.rs
++++ b/xlsynth-g8r/src/gate_fn_optimize.rs
+@@ -77,6 +77,7 @@ pub fn optimize_gate_fn(
+     options: &GateFnOptimizeOptions,
+ ) -> Result<GateFnOptimizeOutcome, String> {
+     let pre_dce_gate_count = gate_fn.gates.len();
++    log::info!("g8r-phase: dce");
+     let mut gate_fn = dce::dce(&gate_fn);
+     log::info!(
+         "pre-fraig dce: gate count {} -> {}",
+diff --git a/xlsynth-g8r/src/gatify/ir2gate.rs b/xlsynth-g8r/src/gatify/ir2gate.rs
+index b47eb7cb..86180dc9 100644
+--- a/xlsynth-g8r/src/gatify/ir2gate.rs
++++ b/xlsynth-g8r/src/gatify/ir2gate.rs
+@@ -4727,6 +4727,7 @@ pub fn gatify(orig_fn: &ir::Fn, options: GatifyOptions) -> Result<GatifyOutput,
+         orig_ref_by_text_id.insert(n.text_id, ir::NodeRef { index: idx });
+     }
+ 
++    log::info!("g8r-phase: prep-for-gatify");
+     let prepared_fn = prep_for_gatify(
+         orig_fn,
+         options.range_info.as_deref(),
+@@ -4741,6 +4742,7 @@ pub fn gatify(orig_fn: &ir::Fn, options: GatifyOptions) -> Result<GatifyOutput,
+     );
+     validate_fn_for_gatify(&prepared_fn)
+         .map_err(|e| format!("PIR validation failed after prep_for_gatify: {e}"))?;
++    log::info!("g8r-phase: gatify-lower");
+     gatify_lower_prepared_fn(&prepared_fn, &options, Some(&orig_ref_by_text_id), orig_fn)
+ }
+ 
+diff --git a/xlsynth-g8r/src/ir2gates.rs b/xlsynth-g8r/src/ir2gates.rs
+index 055d6b5e..a467c39c 100644
+--- a/xlsynth-g8r/src/ir2gates.rs
++++ b/xlsynth-g8r/src/ir2gates.rs
+@@ -177,6 +177,7 @@ pub fn prepare_ir_for_gatify_from_ir_text(
+     top: Option<&str>,
+     options: &Ir2GatesOptions,
+ ) -> Result<PreparedIrForGatify, String> {
++    log::info!("g8r-phase: pir-parse");
+     // Parse with PIR for lowering.
+     let mut parser = ir_parser::Parser::new(ir_text);
+     let mut pir_package = parser
+@@ -193,6 +194,7 @@ pub fn prepare_ir_for_gatify_from_ir_text(
+         }
+     };
+ 
++    log::info!("g8r-phase: array-alias-analysis");
+     apply_formal_array_alias_analysis(
+         &mut pir_package,
+         &top_fn_name,
+@@ -203,6 +205,7 @@ pub fn prepare_ir_for_gatify_from_ir_text(
+         .get_fn(&top_fn_name)
+         .ok_or_else(|| format!("PIR package has no function named '{top_fn_name}'"))?;
+ 
++    log::info!("g8r-phase: libxls-range-analysis");
+     // Parse with xlsynth for libxls analysis.
+     let lowered_ir_text = desugar_extensions::emit_package_as_xls_ir_text(&pir_package)
+         .map_err(|e| format!("emit_package_as_xls_ir_text failed: {e}"))?;
+diff --git a/xlsynth-g8r/src/process_ir_path.rs b/xlsynth-g8r/src/process_ir_path.rs
+index aeb0d9c8..7adeb764 100644
+--- a/xlsynth-g8r/src/process_ir_path.rs
++++ b/xlsynth-g8r/src/process_ir_path.rs
+@@ -933,6 +933,7 @@ pub fn canonical_ir_text_to_g8r_lowering_artifacts(
+     ir_top: Option<&str>,
+     lowering_options: &CanonicalG8rOptions,
+ ) -> Result<CanonicalG8rLoweringArtifacts, String> {
++    log::info!("g8r-phase: cut-db-load");
+     let options = lowering_options.to_process_ir_path_options(
+         ir_top, /* quiet= */ true, /* emit_netlist= */ false,
+         /* emit_independent_op_stats= */ false, /* prepared_ir_out= */ None,

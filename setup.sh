@@ -56,6 +56,29 @@ if [[ ! -x "$driver" ]] || [[ "$(cat "$driver_stamp" 2>/dev/null)" != "$driver_w
     echo "$driver_want" > "$driver_stamp"
 fi
 
+# The analysis driver: the same driver with patches/xlsynth-phase-timing.patch,
+# which only adds the log lines that time-passes.sh needs to split the g8r passes.
+analysis_driver="$tools/xlsynth-analysis/bin/xlsynth-driver"
+analysis_stamp="$tools/xlsynth-analysis/.versions"
+analysis_patch="$proj_root/patches/xlsynth-phase-timing.patch"
+analysis_want="$driver_want $(sha256sum "$analysis_patch" | cut -d' ' -f1)"
+if [[ ! -x "$analysis_driver" ]] || [[ "$(cat "$analysis_stamp" 2>/dev/null)" != "$analysis_want" ]]; then
+    crate_src="$tools/xlsynth-crate"
+    crate_tag="v$xlsynth_driver_version"
+    [[ -d $crate_src/.git ]] ||
+        git clone -q --depth 1 --branch "$crate_tag" https://github.com/xlsynth/xlsynth-crate.git "$crate_src"
+    git -C "$crate_src" fetch -q --depth 1 origin tag "$crate_tag"
+    git -C "$crate_src" checkout -q --force "$crate_tag"
+    git -C "$crate_src" apply "$analysis_patch" ||
+        { echo "$analysis_patch does not apply to xlsynth-driver $xlsynth_driver_version" >&2; exit 1; }
+    RUSTFLAGS="-C link-args=-Wl,-rpath,$tools/xls" \
+    XLS_DSO_PATH="$tools/xls/$libxls" \
+    DSLX_STDLIB_PATH="$tools/xls/xls/dslx/stdlib" \
+    cargo "+$rust_toolchain" install --path "$crate_src/xlsynth-driver" \
+        --locked --force --root "$tools/xlsynth-analysis"
+    echo "$analysis_want" > "$analysis_stamp"
+fi
+
 # ORFS's CORNER=TC libraries.
 orfs_libs=(asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz
            asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.gz
@@ -82,6 +105,7 @@ echo "Installed tool versions:"
 echo "  XLS release:       $xls_version"
 echo "  XLS codegen:       $("$tools/xls/codegen_main-ubuntu2004" --version 2>&1 | head -1)"
 echo "  xlsynth-driver:    $("$driver" version 2>&1 | head -1)"
+echo "    analysis driver: $("$analysis_driver" version 2>&1 | head -1) + patches/xlsynth-phase-timing.patch"
 echo "  Rust toolchain:    $rust_toolchain"
 echo "  ORFS commit:       $(git -C "$tools/orfs" rev-parse HEAD)"
 echo "  OpenROAD commit:   $(git -C "$tools/orfs/tools/OpenROAD" rev-parse HEAD)"
