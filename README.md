@@ -132,7 +132,8 @@ files that `setup.sh` copies from ORFS into `lib/` and computes the area in thre
 1. [`aig-tech-map`](https://github.com/xlsynth/xlsynth-crate/blob/main/xlsynth-driver/src/aig_tech_map.rs) maps the g8r gate graph to ASAP7 cells and `gv-area` sums
    the cell areas. Both of those tools are subprograms of [xlsynth-driver](https://crates.io/crates/xlsynth-driver) 
 2. The same IR is emitted as SystemVerilog and synthesized with [Yosys](https://github.com/YosysHQ/yosys) against
-   the full library.
+   the full library, and `gv-area` sums the cell areas of its netlist as for g8r.
+   Both timings include the `gv-area` run.
 3. The SystemVerilog is run through the [OpenROAD-flow-scripts](https://github.com/the-openroad-project/openroad-flow-scripts) synthesis,
    floorplan, placement, CTS and routing stages, giving a post-layout estimate.
 

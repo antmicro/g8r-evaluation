@@ -35,7 +35,6 @@ driver=${4:-tools/xlsynth/bin/xlsynth-driver}
 codegen=tools/xls/codegen_main-ubuntu2004
 orfs_path=${5:-tools/orfs}
 yosys=$orfs_path/tools/install/yosys/bin/yosys
-filterlib=$orfs_path/tools/install/yosys/bin/yosys-filterlib
 
 mkdir -p "$build_dir"
 
@@ -84,14 +83,6 @@ echo "1/7  Prepare ASAP7"
 "$driver" lib2proto "${libs[@]}" \
     --include-timing \
     --output "$build_dir/asap7.proto"
-# Area-only Liberty files: stat needs no timing tables.
-area_liberty_args=
-for lib in "${libs[@]}"; do
-    area_lib="$build_dir/area-$(basename "$lib")"
-    "$filterlib" <(printf '%s\n' '-*' +/library +/library/cell +/library/cell/area) "$lib" \
-        > "$area_lib" 2> /dev/null
-    area_liberty_args+=" -liberty $area_lib"
-done
 
 echo "2/7  DSLX -> optimized IR"
 "$driver" dslx2ir \
@@ -145,8 +136,16 @@ run_yosys() {
         "$output.opt.ir" \
         > "$output.sv"
 
+    # opt_clean -purge drops the unused wires, some driven by 'x, that gv-area
+    # cannot read.
     "$yosys" -q -l "$output.yosys.log" -p \
-        "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; write_verilog -noattr -noexpr $output.yosys-mapped.v; stat$area_liberty_args;"
+        "read_verilog -sv $output.sv; hierarchy -top $top; synth -top $top -noabc; tee -o $output.abc.log abc$liberty_args; opt; opt_clean -purge; write_verilog -noattr -noexpr $output.yosys-mapped.v"
+    "$driver" gv-area \
+        --netlist "$output.yosys-mapped.v" \
+        --liberty_proto "$build_dir/asap7.proto" \
+        --module_name "$top" \
+        --json_out "$output.yosys-area.json" \
+        > /dev/null
 }
 ir2g8r_ms=() g8r_ms=() yosys_ms=() ir2g8r_cpu=() g8r_cpu=() yosys_cpu=()
 for ((run = 0; run <= timing_runs; run++)); do
@@ -164,9 +163,9 @@ for ((run = 0; run <= timing_runs; run++)); do
 done
 
 g8r_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.g8r-area.json" | head -1)
-yosys_area=$(sed -n 's/.*Chip area for module.*: *//p' "$output".yosys.log)
+yosys_area=$(sed -n 's/.*"area": \([^,]*\),/\1/p' "$output.yosys-area.json" | head -1)
 require_area g8r "$g8r_area" "$output.g8r-area.json"
-require_area Yosys "$yosys_area" "$output.yosys.log"
+require_area Yosys "$yosys_area" "$output.yosys-area.json"
 
 if [[ ${SKIP_ORFS:-0} != 0 ]]; then
     echo "7/7  ORFS area estimation skipped (SKIP_ORFS)"
