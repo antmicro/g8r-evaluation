@@ -16,8 +16,9 @@ xlsynth_driver_version=0.75.0
 rust_toolchain=nightly-2026-09-01
 orfs_commit=202c7fccbce32e86db899c54b0a0f0484f869cc3
 kepler_commit=38a26b8daac08f581c79a154d3eb817432248d48
+verilator_version=v5.054
 
-for command in cc curl git make protoc rustup bazelisk uv; do
+for command in cc curl git make protoc rustup bazelisk uv autoconf flex bison; do
     command -v "$command" >/dev/null || { echo "Cannot find $command; see README.md" >&2; exit 1; }
 done
 
@@ -117,10 +118,20 @@ mkdir -p "$tools/eqy"
 pushd "$tools"/eqy
     if [[ ! -x .git ]]; then
         git clone --recursive $yosys_eqy_url .
-        yosys_ver=$(yosys -V | cut -d' ' -f2)
+        yosys_ver=$("$tools"/orfs/tools/yosys/build/yosys -V | cut -d' ' -f2 | sed 's/[^0-9]*$//')
         git checkout v"$yosys_ver"
+        make YOSYS_CONFIG="$tools"/orfs/tools/yosys/build/yosys-config
     fi
-    make
+popd
+
+verilator_url=https://github.com/verilator/verilator.git
+mkdir -p "$tools/verilator"
+pushd "$tools/verilator"
+    if [[ ! -x .git ]]; then
+        git clone $verilator_url . -b $verilator_version
+        autoconf && ./configure
+        make -j$(nproc) verilator_exe
+    fi
 popd
 
 echo
@@ -135,3 +146,4 @@ echo "  OpenROAD commit:   $(git -C "$tools/orfs/tools/OpenROAD" rev-parse HEAD)
 echo "  OpenROAD:          $("$tools/orfs/tools/install/OpenROAD/bin/openroad" -version 2>&1 | head -1)"
 echo "  Yosys:             $("$tools/orfs/tools/install/yosys/bin/yosys" -V 2>&1 | head -1)"
 echo "  kepler-formal:     $("$tools/kepler/bin/kepler-formal" --version 2>&1 | head -1)"
+echo "  Verilator:         $("$tools/verilator/bin/verilator" --version 2>&1 | head -1)"

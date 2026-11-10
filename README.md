@@ -12,7 +12,7 @@ The results for the bundled examples are published at
 Install the prerequisites:
 
 ```shell
-sudo apt install build-essential curl gettext-base git protobuf-compiler python3 rustup
+sudo apt install autoconf bison build-essential curl flex gettext-base git protobuf-compiler python3 rustup
 ```
 
 `setup.sh` also needs `bazelisk` and `uv` on the `PATH`, which are not packaged
@@ -113,17 +113,22 @@ arguments are the design directory (default `examples`) and the logs directory
 with the path to its error log, and the sweep continues.
 
 `check-g8r-yosys-equiv.sh` runs equvalence checking tool to confirm that yosys and g8r
-generated designs are logically equal. It achieves this by using `scripts/commonize_ports.py`
-script to make input/output port names the same between yosys and g8r generated designs,
-later it runs kepler-formal to actually verify logic equality.
+generated designs are logically equal. For each example it first runs that
+example's SystemVerilog behavioral testbench (see `sim_tbs/`); if the testbench
+fails, the (expensive) kepler-formal and yosys eqy checks are not run for that
+example. Otherwise it uses `scripts/commonize_ports.py` to make input/output
+port names the same between yosys and g8r generated designs, then runs
+kepler-formal and yosys eqy to actually verify logic equality.
 
 ```shell
 ./check-g8r-yosys-equiv.sh ./build/examples
 ```
 
-The table columns are the function name and result from kepler-formal that
-determines if designs are equal/partially proven equal/inconclusive/definitely
-uneqal.
+The table columns are the function name, the SystemVerilog testbench result
+(`sv_bench`), and the results from kepler-formal and yosys eqy that determine
+if designs are equal/partially proven equal/inconclusive/definitely unequal.
+When the testbench fails, the kepler-formal and yosys eqy columns show
+`SKIPPED (bench failed)`.
 
 ## Examples
 

@@ -71,21 +71,26 @@ uv run --locked scripts/plot_logs.py comp_logs --output-dir plots-time --mode ti
 
 ## Logical equivalence table
 
-The kepler-formal verdicts for the g8r vs. Yosys mapped designs are collected in a designated equivalence log (e.g. `equivalence.log`), a whitespace-delimited table with a `function` column and a `kepler` verdict column, as printed by `check-g8r-yosys-equiv.sh`:
+The check results for the g8r vs. Yosys mapped designs are collected in a designated equivalence log (e.g. `equivalence.log`), a fixed-width table with a `function` column followed by one column per check (`sv_bench`, `kepler`, `yosys_eqy`), as printed by `check-g8r-yosys-equiv.sh`:
 
 ```
-function                  kepler
-adler32_seq               PROVEN EQUAL
-arith_div32               PARTIALLY PROVEN EQUAL
+function                  sv_bench                  kepler                    yosys_eqy
+adler32_seq               NO TESTBENCH (SKIPPED)    PROVEN EQUAL              DESIGN NOT EQUAL/EQUIVALENCE FAILED
+arith_add128              PASS                      PROVEN EQUAL              DESIGN NOT EQUAL/EQUIVALENCE FAILED
+arith_div32               FAIL                      SKIPPED (bench failed)    SKIPPED (bench failed)
 ```
 
-Passing `--equivalence-log` makes the gallery read that table and render a summary (function, verdict) above the plot charts:
+Columns are located by the positions of the header words (the last column runs to end-of-line), so multi-word and overlong values are kept intact. The `sv_bench` column is the result of the per-example SystemVerilog
+testbench that runs before the formal checks; when it fails, the kepler-formal
+and yosys eqy checks are not run for that example (shown as *SKIPPED*). Older `function`/`kepler`-only logs are still accepted.
+
+Passing `--equivalence-log` makes the gallery read that table and render a summary (function plus one column per check) above the plot charts:
 
 ```sh
 python3 build_gallery.py plots --output site/index.html --equivalence-log equivalence.log
 ```
 
-Verdicts are colour-coded: green for `PROVEN EQUAL`, amber for `PARTIALLY PROVEN EQUAL`, red for `DEFINITELY UNEQUAL`, and grey for `INCONCLUSIVE`, `UNKNOWN RETURN VALUE` or missing values (checks that were not run show as *not run*).
+Results are colour-coded: green for `PASS` / `PROVEN EQUAL`, amber for `PARTIALLY PROVEN EQUAL`, red for `FAIL`, `DEFINITELY UNEQUAL` and `DESIGN NOT EQUAL/EQUIVALENCE FAILED`, and grey for `INCONCLUSIVE`, `SKIPPED`, `UNKNOWN RETURN VALUE` or missing values (empty cells show as *not run*).
 
 ## Custom locations
 
