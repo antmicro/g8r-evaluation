@@ -26,13 +26,13 @@ case "${1:-}" in
 esac
 [[ $# -ge 2 ]] && [[ $# -le 5 ]] || { usage >&2; exit 2; }
 
+source common.sh
 design=$1
 top=$2
 build_dir=${3:-./build}
 output="$build_dir/$top"
-libs=(lib/*.lib)
-driver=${4:-tools/xlsynth/bin/xlsynth-driver}
-codegen=tools/xls/codegen_main-ubuntu2004
+# The driver and ORFS from the arguments, if given.
+driver=${4:-$driver}
 orfs_path=${5:-tools/orfs}
 yosys=$orfs_path/tools/install/yosys/bin/yosys
 
@@ -99,23 +99,15 @@ liberty_args=$(printf ' -liberty %s' "${libs[@]}")
 # Run both flows in each iteration, so load affects them alike.
 timing_runs=${TIMING_RUNS:-5}
 ((timing_runs >= 1)) || { echo "TIMING_RUNS must be >= 1" >&2; exit 2; }
-TIMEFORMAT='%3R %3U %3S'
-# Run a command; print its wall and CPU (user + system) time in ms.
-timed() {
-    local t
-    t=$( { time "$@" 2>&4; } 4>&2 2>&1 ) || return
-    set -- $t
-    echo "$((10#${1/[.,]/})) $((10#${2/[.,]/} + 10#${3/[.,]/}))"
-}
 run_ir2g8r() {
     "$driver" ir2g8r "$output.opt.ir" \
-        --enable-formal-array-alias-analysis false \
+        "${ir2g8r_flags[@]}" \
         --aiger-out "$output.aag" \
         > /dev/null
 }
 run_g8r_mapping() {
     "$driver" aig-tech-map "$output.aag" \
-        --strategy area \
+        "${tech_map_flags[@]}" \
         --liberty_proto "$build_dir/asap7.proto" \
         --module_name "$top" \
         --netlist_out "$output.g8r-mapped.v" \
@@ -179,20 +171,16 @@ else
     require_area ORFS "$ORFS_AREA" "$output.orfs.log"
 fi
 
-median() {
-    printf '%s\n' "$@" | sort -n | sed -n "$((($# + 1) / 2))p"
-}
-
 echo
 echo "Timing, area and time comparison (ASAP7):"
 # Median wall time, CPU time (read by compare-all.sh) and wall-time range.
 timing_line() {
     local wall=($2) cpu=($3)
     local range=($(printf '%s\n' "${wall[@]}" | sort -n | sed -n '1p;$p'))
-    LC_NUMERIC=C printf '  %-16s%.2f ms  (CPU %.2f ms; wall min %.2f, max %.2f ms over %d runs)\n' \
+    printf '  %-16s%.2f ms  (CPU %.2f ms; wall min %.2f, max %.2f ms over %d runs)\n' \
         "$1:" "$(median "${wall[@]}")" "$(median "${cpu[@]}")" "${range[0]}" "${range[-1]}" "${#wall[@]}"
 }
 timing_line ir2g8r "${ir2g8r_ms[*]}" "${ir2g8r_cpu[*]}"
 timing_line g8r "${g8r_ms[*]}" "${g8r_cpu[*]}"
 timing_line Yosys "${yosys_ms[*]}" "${yosys_cpu[*]}"
-LC_NUMERIC=C printf '  g8r:            %.2f um^2\n  Yosys:          %.2f um^2\n  ORFS:           %.2f um^2\n' "$g8r_area" "$yosys_area" "$ORFS_AREA"
+printf '  g8r:            %.2f um^2\n  Yosys:          %.2f um^2\n  ORFS:           %.2f um^2\n' "$g8r_area" "$yosys_area" "$ORFS_AREA"

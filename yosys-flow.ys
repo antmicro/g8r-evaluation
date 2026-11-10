@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Antmicro <www.antmicro.com>
+# SPDX-License-Identifier: Apache-2.0
+
+# The Yosys flow of compare-flows.sh and time-passes.sh, from SystemVerilog to
+# ASAP7 cells. common.sh fills in ${SV}, ${TOP}, ${LIBERTY} and ${V}.
+read_verilog -sv ${SV}
+hierarchy -top ${TOP}
+synth -top ${TOP} -noabc
+abc ${LIBERTY}
+opt
+opt_clean -purge
+write_verilog -noattr -noexpr ${V}
