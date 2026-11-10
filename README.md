@@ -12,7 +12,7 @@ The results for the bundled examples are published at
 Install the prerequisites:
 
 ```shell
-sudo apt install build-essential curl git protobuf-compiler rustup
+sudo apt install build-essential curl gettext-base git protobuf-compiler python3 rustup
 ```
 
 `setup.sh` also needs `bazelisk` and `uv` on the `PATH`, which are not packaged
@@ -154,6 +154,37 @@ of Yosys. The ORFS result includes placement and wiring overhead and varies
 more between designs, this can be observed inside `orfs.log` files from the design,
 initially after synthesis result the same to `Yosys` one, and after place and
 route it is significantly higher.
+
+## Comparing flows
+
+`compare-flows.sh` runs four flows from the optimized IR to an ASAP7 netlist
+and prints the area, cell count and CPU time of each:
+
+- g8r: g8r's front end, optimization and mapper (`aig-tech-map`);
+- g8r + ABC opt + ABC map: g8r's front end, then ABC as in Yosys's `abc` pass;
+- g8r + ABC opt + g8r map: g8r's front end, ABC's optimization and g8r's
+  mapper;
+- Yosys: SystemVerilog from XLS codegen, Yosys `synth` and ABC.
+
+`time-passes.sh` times every pass of these flows, with the driver that
+`setup.sh` builds with `patches/xlsynth-phase-timing.patch`. For one design:
+
+```shell
+SKIP_ORFS=1 ./estimate-cell-area.sh examples/arithmetic/mul.x arith_mul16 build/arith_mul16
+./compare-flows.sh build/arith_mul16 arith_mul16
+./time-passes.sh build/arith_mul16 arith_mul16 > build/arith_mul16/passes.tsv
+uv run --locked scripts/plot_passes.py build/arith_mul16/passes.tsv --output arith_mul16-passes.png
+```
+
+`analyze-flows.sh` runs both on the designs of `analysis-designs.txt`, and the
+other two scripts write a report and an HTML page of the charts. Run it on an
+idle machine, since load changes the times:
+
+```shell
+TIMING_RUNS=3 ./analyze-flows.sh analysis-designs.txt flow_analysis
+uv run --locked scripts/flows_report.py flow_analysis
+uv run --locked scripts/build_gallery.py --output flow_analysis_html/index.html flow_analysis
+```
 
 ## Plots and report
 
