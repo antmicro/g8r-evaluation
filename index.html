@@ -1,0 +1,392 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Benchmark plots</title><style>
+body {
+  background: #f6f8fb;
+  color: #172033;
+  font: 16px/1.5 system-ui, sans-serif;
+  margin: 0;
+}
+
+main {
+  margin: auto;
+  max-width: 1440px;
+  padding: 2rem;
+}
+
+h1 {
+  margin-bottom: .15rem;
+}
+
+.subtitle {
+  color: #5c6577;
+  margin-top: 0;
+}
+
+.site-nav {
+  margin-bottom: 1.5rem;
+}
+
+.nav-link {
+  background: #2855b8;
+  border-radius: .5rem;
+  color: #fff;
+  display: inline-block;
+  font-size: .875rem;
+  font-weight: 700;
+  padding: .45rem .9rem;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  background: #173676;
+}
+
+
+.category {
+  margin-top: 2.5rem;
+}
+
+.comparisons {
+  display: grid;
+  gap: 1.25rem;
+}
+
+article {
+  background: #fff;
+  border: 1px solid #dce1eb;
+  border-radius: .75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 5px #1720330d;
+}
+
+article h3 {
+  font-size: 1rem;
+  margin: 0;
+  padding: .8rem 1rem;
+}
+
+.variants {
+  display: grid;
+  gap: 1px;
+  background: #dce1eb;
+}
+
+figure {
+  background: #fff;
+  margin: 0;
+  min-width: 0;
+  padding: .75rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+figcaption {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: #5c6577;
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+.figure-label {
+  flex: 1 1 auto;
+  color: #172033;
+}
+
+.figure-download {
+  flex: 0 0 auto;
+  color: #2855b8;
+  font-size: .75rem;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.expand-button {
+  background: #fff;
+  border: 0;
+  color: inherit;
+  cursor: zoom-in;
+  display: block;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.expand-button:focus {
+  outline: none;
+}
+
+.expand-button:hover .chart-image,
+.expand-button:focus-visible .chart-image {
+  outline: 2px solid #2855b8;
+  outline-offset: 2px;
+}
+
+.chart-image {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.missing {
+  background: #fff;
+  color: #70798a;
+  display: grid;
+  margin: 0;
+  min-height: 10rem;
+  min-width: 0;
+  padding: .75rem;
+  place-items: center;
+  text-align: center;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.figure-download {
+  color: #2855b8;
+  text-decoration: underline;
+}
+
+body.lightbox-open {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .variants {
+    grid-template-columns: 1fr !important;
+  }
+
+  main {
+    padding: 1rem;
+  }
+}
+
+.lightbox {
+  align-items: center;
+  background: rgba(12, 17, 28, .86);
+  display: none;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 1000;
+}
+
+.lightbox.open {
+  display: flex;
+}
+
+.lightbox-content {
+  background: #fff;
+  border-radius: .75rem;
+  box-shadow: 0 20px 50px #0b122166;
+  display: flex;
+  flex-direction: column;
+  height: min(94vh, 1600px);
+  max-height: 94vh;
+  max-width: 96vw;
+  overflow: hidden;
+  width: min(96vw, 2200px);
+}
+
+.lightbox-header {
+  align-items: center;
+  border-bottom: 1px solid #dce1eb;
+  display: flex;
+  flex: 0 0 auto;
+  gap: .75rem;
+  padding: .75rem 1rem;
+}
+
+#lightbox-caption {
+  color: #172033;
+  flex: 1 1 auto;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.lightbox-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-left: auto;
+}
+
+.lightbox-button {
+  appearance: none;
+  background: #fff;
+  border: 1px solid #cfd6e4;
+  border-radius: .5rem;
+  color: #172033;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  padding: .4rem .7rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lightbox-button:hover,
+.lightbox-button:focus-visible {
+  border-color: #2855b8;
+  color: #173676;
+  background: #eef3ff;
+}
+
+.lightbox-close {
+  font-size: 1.2rem;
+  line-height: 1;
+  padding-inline: .65rem;
+}
+
+.lightbox-body {
+  background: #fff;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.lightbox-image {
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 760px) {
+  .lightbox {
+    padding: 0;
+  }
+
+  .lightbox-content {
+    border-radius: 0;
+    height: 100vh;
+    max-height: 100vh;
+    max-width: 100vw;
+    width: 100vw;
+  }
+
+  .lightbox-header {
+    flex-wrap: wrap;
+  }
+
+  .lightbox-toolbar {
+    width: 100%;
+  }
+
+  #lightbox-caption {
+    width: 100%;
+  }
+}
+</style></head><body><main><h1>Benchmark plot comparison</h1><p class="subtitle">33 matched plot(s) across 12 categories and 2 plot directories.</p><nav class="site-nav"><a class="nav-link" href="rankings/index.html">Rankings →</a></nav><section class="category"><h2>adler</h2><div class="comparisons"><article><h3>adler32</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/adler/adler32.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/adler/adler32.png" data-alt="adler32 from plots_examples" data-caption="plots_examples · adler32" aria-label="Expand chart adler32 from plots_examples"><img class="chart-image" src="assets/plots_examples/adler/adler32.png" alt="adler32 from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/adler/adler32.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/adler/adler32.png" data-alt="adler32 from plots_examples_time" data-caption="plots_examples_time · adler32" aria-label="Expand chart adler32 from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/adler/adler32.png" alt="adler32 from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>arithmetic</h2><div class="comparisons"><article><h3>add</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/add.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/add.png" data-alt="add from plots_examples" data-caption="plots_examples · add" aria-label="Expand chart add from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/add.png" alt="add from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/add.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/add.png" data-alt="add from plots_examples_time" data-caption="plots_examples_time · add" aria-label="Expand chart add from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/add.png" alt="add from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>div</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/div.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/div.png" data-alt="div from plots_examples" data-caption="plots_examples · div" aria-label="Expand chart div from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/div.png" alt="div from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/div.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/div.png" data-alt="div from plots_examples_time" data-caption="plots_examples_time · div" aria-label="Expand chart div from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/div.png" alt="div from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>mac</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/mac.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/mac.png" data-alt="mac from plots_examples" data-caption="plots_examples · mac" aria-label="Expand chart mac from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/mac.png" alt="mac from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/mac.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/mac.png" data-alt="mac from plots_examples_time" data-caption="plots_examples_time · mac" aria-label="Expand chart mac from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/mac.png" alt="mac from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>mul</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/mul.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/mul.png" data-alt="mul from plots_examples" data-caption="plots_examples · mul" aria-label="Expand chart mul from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/mul.png" alt="mul from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/mul.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/mul.png" data-alt="mul from plots_examples_time" data-caption="plots_examples_time · mul" aria-label="Expand chart mul from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/mul.png" alt="mul from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>smul</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/smul.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/smul.png" data-alt="smul from plots_examples" data-caption="plots_examples · smul" aria-label="Expand chart smul from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/smul.png" alt="smul from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/smul.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/smul.png" data-alt="smul from plots_examples_time" data-caption="plots_examples_time · smul" aria-label="Expand chart smul from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/smul.png" alt="smul from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>sub</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/sub.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/sub.png" data-alt="sub from plots_examples" data-caption="plots_examples · sub" aria-label="Expand chart sub from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/sub.png" alt="sub from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/sub.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/sub.png" data-alt="sub from plots_examples_time" data-caption="plots_examples_time · sub" aria-label="Expand chart sub from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/sub.png" alt="sub from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>sum4x</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/arithmetic/sum4x.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/arithmetic/sum4x.png" data-alt="sum4x from plots_examples" data-caption="plots_examples · sum4x" aria-label="Expand chart sum4x from plots_examples"><img class="chart-image" src="assets/plots_examples/arithmetic/sum4x.png" alt="sum4x from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/arithmetic/sum4x.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/arithmetic/sum4x.png" data-alt="sum4x from plots_examples_time" data-caption="plots_examples_time · sum4x" aria-label="Expand chart sum4x from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/arithmetic/sum4x.png" alt="sum4x from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>ctrl</h2><div class="comparisons"><article><h3>ctrl</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/ctrl/ctrl.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/ctrl/ctrl.png" data-alt="ctrl from plots_examples" data-caption="plots_examples · ctrl" aria-label="Expand chart ctrl from plots_examples"><img class="chart-image" src="assets/plots_examples/ctrl/ctrl.png" alt="ctrl from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/ctrl/ctrl.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/ctrl/ctrl.png" data-alt="ctrl from plots_examples_time" data-caption="plots_examples_time · ctrl" aria-label="Expand chart ctrl from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/ctrl/ctrl.png" alt="ctrl from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>custom_complex</h2><div class="comparisons"><article><h3>custom</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/custom_complex/custom.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/custom_complex/custom.png" data-alt="custom from plots_examples" data-caption="plots_examples · custom" aria-label="Expand chart custom from plots_examples"><img class="chart-image" src="assets/plots_examples/custom_complex/custom.png" alt="custom from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/custom_complex/custom.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/custom_complex/custom.png" data-alt="custom from plots_examples_time" data-caption="plots_examples_time · custom" aria-label="Expand chart custom from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/custom_complex/custom.png" alt="custom from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>dot</h2><div class="comparisons"><article><h3>dot</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/dot/dot.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/dot/dot.png" data-alt="dot from plots_examples" data-caption="plots_examples · dot" aria-label="Expand chart dot from plots_examples"><img class="chart-image" src="assets/plots_examples/dot/dot.png" alt="dot from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/dot/dot.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/dot/dot.png" data-alt="dot from plots_examples_time" data-caption="plots_examples_time · dot" aria-label="Expand chart dot from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/dot/dot.png" alt="dot from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>float</h2><div class="comparisons"><article><h3>fparth</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/float/fparth.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/float/fparth.png" data-alt="fparth from plots_examples" data-caption="plots_examples · fparth" aria-label="Expand chart fparth from plots_examples"><img class="chart-image" src="assets/plots_examples/float/fparth.png" alt="fparth from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/float/fparth.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/float/fparth.png" data-alt="fparth from plots_examples_time" data-caption="plots_examples_time · fparth" aria-label="Expand chart fparth from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/float/fparth.png" alt="fparth from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>logic</h2><div class="comparisons"><article><h3>and</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/and.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/and.png" data-alt="and from plots_examples" data-caption="plots_examples · and" aria-label="Expand chart and from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/and.png" alt="and from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/and.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/and.png" data-alt="and from plots_examples_time" data-caption="plots_examples_time · and" aria-label="Expand chart and from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/and.png" alt="and from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>nand</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/nand.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/nand.png" data-alt="nand from plots_examples" data-caption="plots_examples · nand" aria-label="Expand chart nand from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/nand.png" alt="nand from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/nand.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/nand.png" data-alt="nand from plots_examples_time" data-caption="plots_examples_time · nand" aria-label="Expand chart nand from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/nand.png" alt="nand from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>nor</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/nor.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/nor.png" data-alt="nor from plots_examples" data-caption="plots_examples · nor" aria-label="Expand chart nor from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/nor.png" alt="nor from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/nor.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/nor.png" data-alt="nor from plots_examples_time" data-caption="plots_examples_time · nor" aria-label="Expand chart nor from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/nor.png" alt="nor from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>not</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/not.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/not.png" data-alt="not from plots_examples" data-caption="plots_examples · not" aria-label="Expand chart not from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/not.png" alt="not from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/not.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/not.png" data-alt="not from plots_examples_time" data-caption="plots_examples_time · not" aria-label="Expand chart not from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/not.png" alt="not from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>or</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/or.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/or.png" data-alt="or from plots_examples" data-caption="plots_examples · or" aria-label="Expand chart or from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/or.png" alt="or from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/or.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/or.png" data-alt="or from plots_examples_time" data-caption="plots_examples_time · or" aria-label="Expand chart or from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/or.png" alt="or from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xnor</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/xnor.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/xnor.png" data-alt="xnor from plots_examples" data-caption="plots_examples · xnor" aria-label="Expand chart xnor from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/xnor.png" alt="xnor from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/xnor.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/xnor.png" data-alt="xnor from plots_examples_time" data-caption="plots_examples_time · xnor" aria-label="Expand chart xnor from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/xnor.png" alt="xnor from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xor</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/logic/xor.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/logic/xor.png" data-alt="xor from plots_examples" data-caption="plots_examples · xor" aria-label="Expand chart xor from plots_examples"><img class="chart-image" src="assets/plots_examples/logic/xor.png" alt="xor from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/logic/xor.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/logic/xor.png" data-alt="xor from plots_examples_time" data-caption="plots_examples_time · xor" aria-label="Expand chart xor from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/logic/xor.png" alt="xor from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>sel</h2><div class="comparisons"><article><h3>sel16</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/sel/sel16.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/sel/sel16.png" data-alt="sel16 from plots_examples" data-caption="plots_examples · sel16" aria-label="Expand chart sel16 from plots_examples"><img class="chart-image" src="assets/plots_examples/sel/sel16.png" alt="sel16 from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/sel/sel16.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/sel/sel16.png" data-alt="sel16 from plots_examples_time" data-caption="plots_examples_time · sel16" aria-label="Expand chart sel16 from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/sel/sel16.png" alt="sel16 from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>sel8</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/sel/sel8.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/sel/sel8.png" data-alt="sel8 from plots_examples" data-caption="plots_examples · sel8" aria-label="Expand chart sel8 from plots_examples"><img class="chart-image" src="assets/plots_examples/sel/sel8.png" alt="sel8 from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/sel/sel8.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/sel/sel8.png" data-alt="sel8 from plots_examples_time" data-caption="plots_examples_time · sel8" aria-label="Expand chart sel8 from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/sel/sel8.png" alt="sel8 from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>update</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/sel/update.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/sel/update.png" data-alt="update from plots_examples" data-caption="plots_examples · update" aria-label="Expand chart update from plots_examples"><img class="chart-image" src="assets/plots_examples/sel/update.png" alt="update from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/sel/update.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/sel/update.png" data-alt="update from plots_examples_time" data-caption="plots_examples_time · update" aria-label="Expand chart update from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/sel/update.png" alt="update from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>sha256</h2><div class="comparisons"><article><h3>sha256</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/sha256/sha256.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/sha256/sha256.png" data-alt="sha256 from plots_examples" data-caption="plots_examples · sha256" aria-label="Expand chart sha256 from plots_examples"><img class="chart-image" src="assets/plots_examples/sha256/sha256.png" alt="sha256 from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/sha256/sha256.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/sha256/sha256.png" data-alt="sha256 from plots_examples_time" data-caption="plots_examples_time · sha256" aria-label="Expand chart sha256 from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/sha256/sha256.png" alt="sha256 from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>shift</h2><div class="comparisons"><article><h3>rot</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/shift/rot.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/shift/rot.png" data-alt="rot from plots_examples" data-caption="plots_examples · rot" aria-label="Expand chart rot from plots_examples"><img class="chart-image" src="assets/plots_examples/shift/rot.png" alt="rot from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/shift/rot.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/shift/rot.png" data-alt="rot from plots_examples_time" data-caption="plots_examples_time · rot" aria-label="Expand chart rot from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/shift/rot.png" alt="rot from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>shl</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/shift/shl.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/shift/shl.png" data-alt="shl from plots_examples" data-caption="plots_examples · shl" aria-label="Expand chart shl from plots_examples"><img class="chart-image" src="assets/plots_examples/shift/shl.png" alt="shl from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/shift/shl.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/shift/shl.png" data-alt="shl from plots_examples_time" data-caption="plots_examples_time · shl" aria-label="Expand chart shl from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/shift/shl.png" alt="shl from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>shr</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/shift/shr.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/shift/shr.png" data-alt="shr from plots_examples" data-caption="plots_examples · shr" aria-label="Expand chart shr from plots_examples"><img class="chart-image" src="assets/plots_examples/shift/shr.png" alt="shr from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/shift/shr.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/shift/shr.png" data-alt="shr from plots_examples_time" data-caption="plots_examples_time · shr" aria-label="Expand chart shr from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/shift/shr.png" alt="shr from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>xor_heavy</h2><div class="comparisons"><article><h3>xor crc</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/xor_heavy/xor_crc.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/xor_heavy/xor_crc.png" data-alt="xor crc from plots_examples" data-caption="plots_examples · xor crc" aria-label="Expand chart xor crc from plots_examples"><img class="chart-image" src="assets/plots_examples/xor_heavy/xor_crc.png" alt="xor crc from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/xor_heavy/xor_crc.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/xor_heavy/xor_crc.png" data-alt="xor crc from plots_examples_time" data-caption="plots_examples_time · xor crc" aria-label="Expand chart xor crc from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/xor_heavy/xor_crc.png" alt="xor crc from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xor eq</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/xor_heavy/xor_eq.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/xor_heavy/xor_eq.png" data-alt="xor eq from plots_examples" data-caption="plots_examples · xor eq" aria-label="Expand chart xor eq from plots_examples"><img class="chart-image" src="assets/plots_examples/xor_heavy/xor_eq.png" alt="xor eq from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/xor_heavy/xor_eq.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/xor_heavy/xor_eq.png" data-alt="xor eq from plots_examples_time" data-caption="plots_examples_time · xor eq" aria-label="Expand chart xor eq from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/xor_heavy/xor_eq.png" alt="xor eq from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xor gray</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/xor_heavy/xor_gray.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/xor_heavy/xor_gray.png" data-alt="xor gray from plots_examples" data-caption="plots_examples · xor gray" aria-label="Expand chart xor gray from plots_examples"><img class="chart-image" src="assets/plots_examples/xor_heavy/xor_gray.png" alt="xor gray from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/xor_heavy/xor_gray.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/xor_heavy/xor_gray.png" data-alt="xor gray from plots_examples_time" data-caption="plots_examples_time · xor gray" aria-label="Expand chart xor gray from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/xor_heavy/xor_gray.png" alt="xor gray from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xor parity</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/xor_heavy/xor_parity.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/xor_heavy/xor_parity.png" data-alt="xor parity from plots_examples" data-caption="plots_examples · xor parity" aria-label="Expand chart xor parity from plots_examples"><img class="chart-image" src="assets/plots_examples/xor_heavy/xor_parity.png" alt="xor parity from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/xor_heavy/xor_parity.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/xor_heavy/xor_parity.png" data-alt="xor parity from plots_examples_time" data-caption="plots_examples_time · xor parity" aria-label="Expand chart xor parity from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/xor_heavy/xor_parity.png" alt="xor parity from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xor popcount</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/xor_heavy/xor_popcount.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/xor_heavy/xor_popcount.png" data-alt="xor popcount from plots_examples" data-caption="plots_examples · xor popcount" aria-label="Expand chart xor popcount from plots_examples"><img class="chart-image" src="assets/plots_examples/xor_heavy/xor_popcount.png" alt="xor popcount from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/xor_heavy/xor_popcount.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/xor_heavy/xor_popcount.png" data-alt="xor popcount from plots_examples_time" data-caption="plots_examples_time · xor popcount" aria-label="Expand chart xor popcount from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/xor_heavy/xor_popcount.png" alt="xor popcount from plots_examples_time" loading="lazy"></button></figure></div></article><article><h3>xor ult</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/xor_heavy/xor_ult.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/xor_heavy/xor_ult.png" data-alt="xor ult from plots_examples" data-caption="plots_examples · xor ult" aria-label="Expand chart xor ult from plots_examples"><img class="chart-image" src="assets/plots_examples/xor_heavy/xor_ult.png" alt="xor ult from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/xor_heavy/xor_ult.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/xor_heavy/xor_ult.png" data-alt="xor ult from plots_examples_time" data-caption="plots_examples_time · xor ult" aria-label="Expand chart xor ult from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/xor_heavy/xor_ult.png" alt="xor ult from plots_examples_time" loading="lazy"></button></figure></div></article></div></section><section class="category"><h2>zstd</h2><div class="comparisons"><article><h3>zstd</h3><div class="variants" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><figure><figcaption><span class="figure-label">plots_examples</span><a class="figure-download" href="assets/plots_examples/zstd/zstd.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples/zstd/zstd.png" data-alt="zstd from plots_examples" data-caption="plots_examples · zstd" aria-label="Expand chart zstd from plots_examples"><img class="chart-image" src="assets/plots_examples/zstd/zstd.png" alt="zstd from plots_examples" loading="lazy"></button></figure><figure><figcaption><span class="figure-label">plots_examples_time</span><a class="figure-download" href="assets/plots_examples_time/zstd/zstd.png" download>Download</a></figcaption><button type="button" class="expand-button" data-src="assets/plots_examples_time/zstd/zstd.png" data-alt="zstd from plots_examples_time" data-caption="plots_examples_time · zstd" aria-label="Expand chart zstd from plots_examples_time"><img class="chart-image" src="assets/plots_examples_time/zstd/zstd.png" alt="zstd from plots_examples_time" loading="lazy"></button></figure></div></article></div></section>
+<div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Expanded chart">
+  <div class="lightbox-content" role="document">
+    <div class="lightbox-header">
+      <div id="lightbox-caption" aria-live="polite"></div>
+      <div class="lightbox-toolbar">
+        <button id="lightbox-prev" class="lightbox-button" type="button">Previous</button>
+        <button id="lightbox-next" class="lightbox-button" type="button">Next</button>
+        <a id="lightbox-download" class="lightbox-button" href="#" download="chart.png">Download PNG</a>
+        <button id="lightbox-close" class="lightbox-button lightbox-close" type="button" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="lightbox-body">
+      <img id="lightbox-image" class="lightbox-image" alt="">
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const lightbox = document.getElementById("lightbox");
+  if (!lightbox) return;
+
+  const closeBtn = document.getElementById("lightbox-close");
+  const prevBtn = document.getElementById("lightbox-prev");
+  const nextBtn = document.getElementById("lightbox-next");
+  const image = document.getElementById("lightbox-image");
+  const caption = document.getElementById("lightbox-caption");
+  const downloadLink = document.getElementById("lightbox-download");
+  const buttons = Array.from(document.querySelectorAll(".expand-button"));
+
+  if (!buttons.length) return;
+
+  let currentIndex = -1;
+  let lastFocused = null;
+
+  function fileNameFromPath(path) {
+    const clean = (path || "chart.png").split("?")[0].split("#")[0];
+    const parts = clean.split("/");
+    return parts[parts.length - 1] || "chart.png";
+  }
+
+  function show(index) {
+    currentIndex = (index + buttons.length) % buttons.length;
+    const button = buttons[currentIndex];
+
+    const src = button.getAttribute("data-src") || "";
+    const alt = button.getAttribute("data-alt") || "Chart";
+    const cap = button.getAttribute("data-caption") || "";
+
+    image.src = src;
+    image.alt = alt;
+    caption.textContent = cap;
+
+    downloadLink.href = src;
+    downloadLink.setAttribute("download", fileNameFromPath(src));
+
+    lightbox.classList.add("open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.classList.add("lightbox-open");
+
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function close() {
+    lightbox.classList.remove("open");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("lightbox-open");
+
+    image.removeAttribute("src");
+    image.removeAttribute("alt");
+
+    if (lastFocused) lastFocused.focus();
+    currentIndex = -1;
+  }
+
+  buttons.forEach((button, i) => {
+    button.addEventListener("click", () => {
+      lastFocused = button;
+      show(i);
+    });
+  });
+
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  if (prevBtn) prevBtn.addEventListener("click", () => show(currentIndex - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => show(currentIndex + 1));
+
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox) close();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!lightbox.classList.contains("open")) return;
+
+    if (event.key === "Escape") {
+      close();
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      show(currentIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      show(currentIndex + 1);
+    }
+  });
+})();
+</script></main></body></html>
